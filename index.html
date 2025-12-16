@@ -3,363 +3,1770 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>معرض الأعمال الشخصي - محلل بيانات</title>
-    <!-- تحميل Tailwind CSS CDN -->
+    <title>متتبع تحليل البيانات الشامل</title>
+    <!-- 1. Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- تحميل Font Awesome Icons CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJc5fJbSgQ4sY3p9A4C0M3K4J0q4Q4lQ/sS/JdM91B6sP3eE4V3a6l9Q8zK9tQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
+    <!-- 2. Font Awesome 6.0.0-beta3 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" xintegrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- 3. Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
     <style>
+        /* التخصيصات الأساسية والتصميم الداكن */
         :root {
-            /* لون التركيز الأساسي - أزرق مؤسسي نقي */
-            --primary-color: #1E40AF; /* Tailwind Blue-700 */
-            /* لون خلفية نظيفة */
-            --bg-light: #FFFFFF; 
-            --accent-bg: #F9FAFB;
+            --color-primary: #8b5cf6; /* Indigo 500 */
+            --color-success: #10b981; /* Emerald 500 */
+            --color-warning: #f59e0b; /* Yellow 500 */
+            --color-danger: #f43f5e;  /* Rose 500 */
         }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--accent-bg);
-            color: #1F2937; /* Dark text */
-            scroll-behavior: smooth;
+            background-color: #1f2937; /* خلفية داكنة */
+            color: #f3f4f6;
         }
-        .text-primary { color: var(--primary-color); }
-        .bg-primary { background-color: var(--primary-color); }
-        .skill-icon {
-            font-size: 2.8rem; 
-            margin-bottom: 0.5rem;
-            color: var(--primary-color);
+        .pro-card {
+            background-color: #374151; /* لون البطاقة الداكن */
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
         }
-        /* ------------------------------------------- */
-        /* تحسين تصميم البطاقات وتأثير التمرير عليها */
-        /* ------------------------------------------- */
-        .data-card {
-            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08); /* ظل أعمق قليلاً */
-            border-radius: 0.75rem; /* حواف مستديرة */
-            border: 1px solid #E5E7EB; /* حد خفيف كقاعدة */
-        }
-        .data-card:hover {
-            box-shadow: 0 10px 30px rgba(30, 64, 175, 0.25); /* ظل واضح ومميز بلون التركيز */
-            transform: translateY(-8px); /* ارتقاء ملحوظ عند التمرير */
-            border-color: var(--primary-color); /* إبراز الحدود بلون التركيز */
-        }
-        /* تأثير التمرير للزر الرئيسي */
-        .hero-button:hover {
-            box-shadow: 0 10px 20px rgba(30, 64, 175, 0.4);
+        .pro-card:hover {
             transform: translateY(-2px);
+        }
+        /* شريط التقدم المخصص */
+        .progress-bar-fill {
+            transition: width 0.5s ease-in-out;
+        }
+        /* نمط الزر الأولي */
+        .btn-primary {
+            background-color: var(--color-primary);
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #7c3aed;
+        }
+        .correct-answer {
+            border-right: 4px solid #10b981; /* Emerald */
+        }
+        .user-answer-correct {
+            background-color: #064e3b; /* Darker Emerald */
+        }
+        .user-answer-incorrect {
+            background-color: #7f1d1d; /* Darker Rose */
+            border-right: 4px solid #f43f5e; /* Rose */
+        }
+        .nav-link.active {
+            border-bottom: 3px solid #8b5cf6;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        /* تثبيت المؤقت في الزاوية العلوية اليسرى */
+        .fixed-timer {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            transition: opacity 0.3s;
+        }
+        /* تعطيل التمرير والزر عندما يكون غير نشط */
+        .disabled-nav-btn {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
     </style>
 </head>
-<body class="text-gray-800">
+<body class="p-4 md:p-8 min-h-screen">
 
-    <!-- شريط التنقل (Header) -->
-    <header class="bg-white shadow-md sticky top-0 z-10 border-b border-gray-100">
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <div class="text-2xl font-extrabold text-primary">
-                [اسمك] | محلل بيانات
-            </div>
-            <div class="space-x-6 space-x-reverse hidden md:flex font-medium">
-                <a href="#about" class="text-gray-600 hover:text-primary transition duration-300">من أنا</a>
-                <a href="#experience" class="text-gray-600 hover:text-primary transition duration-300">الخبرة</a>
-                <a href="#skills" class="text-gray-600 hover:text-primary transition duration-300">المهارات</a>
-                <a href="#certifications" class="text-gray-600 hover:text-primary transition duration-300">الشهادات</a>
-                <a href="#projects" class="text-gray-600 hover:text-primary transition duration-300">المشاريع</a>
-                <a href="#cv" class="text-gray-600 hover:text-primary transition duration-300">السيرة الذاتية</a>
-                <a href="#contact" class="text-gray-600 hover:text-primary transition duration-300">تواصل</a>
-            </div>
-        </nav>
+    <header class="text-center mb-6">
+        <h1 class="text-4xl font-extrabold text-white mb-2">متتبع تحليل البيانات الشامل</h1>
+        <p class="text-indigo-300">خطة تعلم متكاملة واختبار كفاءة تشخيصي.</p>
+        <div id="auth-status" class="mt-2 text-sm text-gray-400">... جارٍ تهيئة التطبيق والمصادقة ...</div>
+        <div id="user-id-display" class="mt-1 text-xs text-gray-500 hidden"></div>
     </header>
 
-    <!-- القسم الرئيسي والملخص (Hero/About) -->
-    <section id="about" class="py-20 md:py-36 bg-white shadow-inner">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center gap-16">
+    <!-- شريط التنقل (Tabs) -->
+    <nav class="flex justify-center border-b border-gray-700 mb-8">
+        <button onclick="window.switchView('tracker')" id="nav-tracker" class="nav-link active text-gray-400 py-3 px-6 transition duration-150">
+            <i class="fas fa-route ml-2"></i> خريطة الطريق والمتتبع
+        </button>
+        <button onclick="window.switchView('exam')" id="nav-exam" class="nav-link text-gray-400 py-3 px-6 transition duration-150">
+            <i class="fas fa-star ml-2"></i> الاختبار التشخيصي الشامل
+        </button>
+        <button onclick="window.switchView('history')" id="nav-history" class="nav-link text-gray-400 py-3 px-6 transition duration-150">
+            <i class="fas fa-history ml-2"></i> سجل المراجعة (الاختبارات الجزئية)
+        </button>
+    </nav>
+    
+    <!-- مؤقت الاختبار الثابت (مخفي افتراضيا) -->
+    <div id="fixed-exam-timer" class="fixed-timer hidden">
+        <div id="exam-timer-display" class="text-2xl font-extrabold text-yellow-400 bg-gray-700 p-2 rounded-lg shadow-xl">
+            45:00
+        </div>
+    </div>
+
+
+    <!-- 1. شاشة خريطة الطريق والمتتبع (الافتراضية) -->
+    <div id="tracker-view" class="content-view">
+
+        <!-- شريط التقدم الكلي الجديد -->
+        <div class="pro-card p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-2 text-white">التقدم الكلي في خارطة طريق محلل البيانات</h2>
+            <div class="w-full bg-gray-600 rounded-full h-4">
+                <div id="overall-progress-bar" class="bg-indigo-500 h-4 rounded-full progress-bar-fill" style="width: 0%"></div>
+            </div>
+            <p id="overall-progress-text" class="text-left text-sm mt-2 text-indigo-300">0% إنجاز (0 / 12 مهمة)</p>
+        </div>
+
+        <!-- لوحة القيادة: الإحصائيات العامة والتكلفة -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <!-- إجمالي المهام المنجزة -->
+            <div class="pro-card p-6 text-center">
+                <i class="fas fa-check-circle text-emerald-400 text-3xl mb-2"></i>
+                <p class="text-xl font-bold" id="completed-tasks">0 / 0</p>
+                <p class="text-sm text-gray-400">المهام المنجزة</p>
+            </div>
+            <!-- إجمالي الساعات المسجلة -->
+            <div class="pro-card p-6 text-center">
+                <i class="fas fa-hourglass-half text-yellow-400 text-3xl mb-2"></i>
+                <p class="text-xl font-bold" id="total-hours">0.00</p>
+                <p class="text-sm text-gray-400">إجمالي الساعات</p>
+            </div>
+            <!-- تكلفة الفرصة المحسوبة -->
+            <div class="pro-card p-6 text-center">
+                <i class="fas fa-wallet text-rose-400 text-3xl mb-2"></i>
+                <p class="text-xl font-bold">
+                    <span id="opportunity-egp" class="block text-lg">0 EGP</span>
+                    <span id="opportunity-usd" class="block text-sm text-gray-400">0 USD</span>
+                </p>
+                <p class="text-sm text-gray-400">تكلفة الفرصة (93 EGP/ساعة)</p>
+            </div>
+        </div>
+
+        <!-- Gemini Performance Analyst Button -->
+        <div class="pro-card p-6 mb-10 text-center">
+            <h3 class="text-xl font-semibold mb-4 text-indigo-300">تحليل الأداء الفوري بواسطة الذكاء الاصطناعي</h3>
+            <button onclick="window.analyzePerformance()" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-150 flex items-center justify-center mx-auto" id="analyze-btn">
+                <i class="fas fa-magic ml-2"></i> ✨ محلل الأداء (Gemini AI)
+            </button>
+            <div id="analysis-result" class="mt-4 p-4 text-left bg-gray-700 rounded-lg hidden">
+                <h4 class="font-bold text-lg text-emerald-300 mb-2">ملخص الأداء والتوصيات:</h4>
+                <div id="analysis-content" class="text-gray-200 text-sm"></div>
+            </div>
+        </div>
+
+        <!-- الرسوم البيانية والأوسمة -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+            <!-- مخطط إتقان المهارات -->
+            <div class="pro-card p-6 lg:col-span-1">
+                <h2 class="text-xl font-semibold mb-4 text-indigo-300">إتقان مجموعات المهارات</h2>
+                <div class="h-64 flex justify-center items-center">
+                    <canvas id="skillMasteryChart"></canvas>
+                </div>
+            </div>
+            <!-- مخطط السرعة الأسبوعية -->
+            <div class="pro-card p-6 lg:col-span-2">
+                <h2 class="text-xl font-semibold mb-4 text-indigo-300">معدل الإنجاز (كل أسبوعين)</h2>
+                <div class="h-64">
+                    <canvas id="weeklyPaceChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- لوحة الأوسمة (Badges) -->
+        <div class="pro-card p-6 mb-10">
+            <h2 class="text-xl font-semibold mb-4 text-indigo-300">لوحة الإنجازات (الأوسمة)</h2>
+            <div id="badges-container" class="flex flex-wrap gap-4 justify-center">
+                <!-- سيتم إضافة الأوسمة هنا ديناميكياً -->
+                <div id="badge-SQL_Excel" class="flex flex-col items-center opacity-30 text-gray-500">
+                    <i class="fas fa-database text-4xl mb-1"></i>
+                    <span class="text-xs text-center">خبير SQL/Excel</span>
+                </div>
+                <div id="badge-Python_Visualization" class="flex flex-col items-center opacity-30 text-gray-500">
+                    <i class="fab fa-python text-4xl mb-1"></i>
+                    <span class="text-xs text-center">متقن Python/Viz</span>
+                </div>
+                <div id="badge-Stats_ML" class="flex flex-col items-center opacity-30 text-gray-500">
+                    <i class="fas fa-chart-line text-4xl mb-1"></i>
+                    <span class="text-xs text-center">محلل متكامل</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- خريطة الطريق التفصيلية -->
+        <div id="roadmap-container">
+            <!-- سيتم توليد محتوى خريطة الطريق هنا -->
+            <h2 class="text-2xl font-bold text-white mb-6">خطة العمل لـ 3 أشهر</h2>
+        </div>
+    </div>
+
+    <!-- 2. شاشة الاختبار التشخيصي الشامل (مخفية) -->
+    <div id="exam-view" class="content-view hidden">
+        <div class="pro-card p-8 w-full max-w-4xl mx-auto">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-4">
+                <h2 class="text-3xl font-bold text-rose-400 flex items-center">
+                    <i class="fas fa-brain ml-3"></i> اختبار الكفاءة التشخيصي الشامل
+                </h2>
+                <!-- المؤقت الأصلي (مخفي عند التثبيت) -->
+                <div id="exam-timer" class="text-2xl font-extrabold text-yellow-400 bg-gray-700 p-2 rounded-lg hidden">
+                    45:00
+                </div>
+            </div>
             
-            <!-- النص والملخص -->
-            <div class="md:w-3/5 text-center md:text-right">
-                <p class="text-xl text-primary font-bold mb-2">محلل بيانات محترف</p>
-                <h1 class="text-6xl md:text-7xl font-black leading-snug mb-6 text-gray-900">
-                    أحوّل الأرقام إلى <span class="text-primary">رؤى استراتيجية</span>.
-                </h1>
-                
-                <div class="bg-gray-50 p-6 rounded-xl shadow-lg border border-gray-200">
-                    <p class="text-lg text-gray-700 leading-relaxed">
-                        أمتلك خلفية أكاديمية في **[مجال دراستك]** مع تركيز قوي على **التحليل الكمي ونمذجة البيانات**. لدي خبرة عملية في استخدام **Python** و **SQL** لاستخلاص القيمة من مجموعات البيانات المعقدة. حالياً، أكتسب خبرة في تحليل البيانات الأولية كجزء من دوري في <span class="font-bold text-primary">OOH Data</span>، وألتزم بتقديم حلول مستندة إلى البيانات لدفع اتخاذ القرار الاستراتيجي.
-                    </p>
-                </div>
+            <p class="text-gray-400 mb-6" id="exam-instructions">
+                يقيس هذا الاختبار مهاراتك بشكل احترافي. يتكون من 3 مراحل متتالية (5 أسئلة لكل مرحلة).
+                <br>
+                **المدة المتاحة:** 45 دقيقة. يبدأ المؤقت عند الضغط على "بدء الاختبار".
+            </p>
 
-                <a href="#projects" class="mt-10 inline-flex items-center justify-center px-10 py-4 border border-transparent text-xl font-bold rounded-lg shadow-xl text-white bg-primary hover:bg-blue-800 transition duration-300 hero-button">
-                    <i class="fas fa-chart-line ml-2"></i> استعراض المشاريع الرئيسية
-                </a>
+            <div id="exam-results" class="mb-6 p-4 rounded-lg hidden">
+                <!-- سيتم عرض نتائج الاختبار الشامل هنا -->
             </div>
-
-            <!-- صورة الملف الشخصي (Placeholder) -->
-            <div class="md:w-2/5 flex justify-center">
-                <div class="w-72 h-72 bg-gray-100 rounded-2xl flex flex-col items-center justify-center shadow-2xl border-4 border-primary/20 overflow-hidden transform rotate-3 hover:rotate-0 transition duration-500">
-                    <i class="fas fa-desktop text-7xl text-primary/80"></i>
-                    <p class="mt-4 text-gray-600 font-medium">Data Analyst</p>
-                </div>
-            </div>
-
-        </div>
-    </section>
-    
-    <!-- قسم الخبرة العملية (Work Experience) -->
-    <section id="experience" class="py-16 md:py-24 bg-accent-bg">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-4xl font-bold mb-12 text-gray-900 text-center border-b-4 border-primary inline-block pb-1">الخبرة العملية</h2>
-
-            <div class="max-w-3xl mx-auto space-y-8">
-                <div class="data-card p-6 bg-white">
-                    <div class="flex flex-col sm:flex-row justify-between items-start mb-2">
-                        <div>
-                            <h3 class="text-2xl font-bold text-primary">أخصائي إدخال بيانات ومحلل بيانات مبتدئ</h3>
-                            <p class="text-lg font-semibold text-gray-700">OOH Data</p>
-                        </div>
-                        <span class="text-sm font-medium text-gray-500 bg-gray-200 px-3 py-1 rounded-full whitespace-nowrap mt-2 sm:mt-0">الحالي (حتى مارس 2026)</span>
-                    </div>
-                    <p class="text-gray-700 mb-4 border-t border-gray-200 pt-3">
-                        دور يجمع بين الدقة في إدخال البيانات الأولية ومسؤوليات تحليلية أساسية. على الرغم من أن الجانب التحليلي محدود حالياً، فقد قمت بـ:
-                    </p>
-                    <ul class="list-disc list-inside space-y-2 text-gray-700 marker:text-primary">
-                        <li>تطوير مهارات **تنظيف البيانات** والتحقق من جودتها قبل المعالجة.</li>
-                        <li>تطبيق **استعلامات SQL** أساسية لاستخلاص التقارير المطلوبة.</li>
-                        <li>العمل بكفاءة في بيئة عمل سريعة الخطى تتطلب دقة عالية في التعامل مع كميات كبيرة من البيانات.</li>
-                    </ul>
-                    <p class="text-sm text-gray-500 mt-4">
-                        <i class="fas fa-money-bill-wave ml-1"></i> التركيز على إيجاد فرص لتطبيق مهارات Python لتحسين كفاءة العمليات.
-                    </p>
-                </div>
-
-                <!-- مثال لمنصب سابق (يجب ملؤه لاحقاً) -->
-                <div class="data-card p-6 bg-white">
-                    <div class="flex flex-col sm:flex-row justify-between items-start mb-2">
-                        <div>
-                            <h3 class="text-xl font-bold text-primary/80">منصب سابق (إذا وجد)</h3>
-                            <p class="text-md font-semibold text-gray-600">الشركة / المؤسسة السابقة</p>
-                        </div>
-                        <span class="text-sm font-medium text-gray-500 bg-gray-200 px-3 py-1 rounded-full whitespace-nowrap mt-2 sm:mt-0">من 20XX إلى 20XX</span>
-                    </div>
-                    <p class="text-gray-600 border-t border-gray-200 pt-3">وصف موجز للمهام والإنجازات الرئيسية. (استبدل هذا النص بخبرتك الفعلية، مع التركيز على النتائج الرقمية).</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- قسم المهارات (Skills) -->
-    <section id="skills" class="py-16 md:py-24 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-4xl font-bold mb-12 text-gray-900 border-b-4 border-primary inline-block pb-1">مجموعة أدوات تحليل البيانات</h2>
             
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+            <button id="start-exam-btn" onclick="window.startComprehensiveExam()" class="w-full bg-rose-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-rose-700 transition duration-150">
+                بدء الاختبار الآن (45 دقيقة)
+            </button>
+
+            <!-- حاوية مراحل الاختبار -->
+            <form id="comprehensive-exam-form" onsubmit="window.submitComprehensiveExam(event)" class="hidden">
                 
-                <!-- مهارة 1: Python -->
-                <div class="p-6 bg-gray-50 rounded-xl data-card text-center">
-                    <i class="fab fa-python skill-icon"></i>
-                    <h3 class="text-lg font-semibold text-primary mt-2">Python</h3>
-                    <p class="text-sm text-gray-600">Pandas, NumPy, Scikit-learn</p>
-                </div>
-                
-                <!-- مهارة 2: SQL -->
-                <div class="p-6 bg-gray-50 rounded-xl data-card text-center">
-                    <i class="fas fa-database skill-icon"></i>
-                    <h3 class="text-lg font-semibold text-primary mt-2">SQL</h3>
-                    <p class="text-sm text-gray-600">Complex Queries, Optimization</p>
-                </div>
-                
-                <!-- مهارة 3: Data Visualization -->
-                <div class="p-6 bg-gray-50 rounded-xl data-card text-center">
-                    <i class="fas fa-chart-pie skill-icon"></i>
-                    <h3 class="text-lg font-semibold text-primary mt-2">التصور</h3>
-                    <p class="text-sm text-gray-600">Tableau, Power BI, Matplotlib</p>
+                <div id="exam-stage-container" class="space-y-6 mt-6">
+                    <!-- سيتم توليد أسئلة المرحلة الحالية هنا -->
                 </div>
 
-                <!-- مهارة 4: Machine Learning -->
-                <div class="p-6 bg-gray-50 rounded-xl data-card text-center">
-                    <i class="fas fa-robot skill-icon"></i>
-                    <h3 class="text-lg font-semibold text-primary mt-2">النمذجة</h3>
-                    <p class="text-sm text-gray-600">Classification, Time Series</p>
+                <!-- أزرار التنقل بين المراحل -->
+                <div class="flex justify-center items-center mt-6">
+                    <!-- زر التالي/الإرسال يظهر فقط -->
+                    <button type="button" id="next-stage-btn" onclick="window.navigateExamStage(1)" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700 transition duration-150 disabled:opacity-50">
+                        المرحلة التالية <i class="fas fa-arrow-left mr-2"></i>
+                    </button>
+                    <!-- زر إنهاء الاختبار يظهر في المرحلة الأخيرة فقط -->
+                    <button type="submit" class="bg-emerald-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-emerald-700 transition duration-150 hidden disabled:opacity-50" id="finish-exam-btn">
+                        إنهاء الاختبار
+                    </button>
                 </div>
-
-                 <!-- مهارة 5: ETL/Cloud -->
-                <div class="p-6 bg-gray-50 rounded-xl data-card text-center">
-                    <i class="fas fa-cloud-arrow-up skill-icon"></i>
-                    <h3 class="text-lg font-semibold text-primary mt-2">معالجة البيانات</h3>
-                    <p class="text-sm text-gray-600">ETL Pipelines, Data Wrangling</p>
-                </div>
-                
-            </div>
+            </form>
         </div>
-    </section>
+    </div>
     
-    <!-- قسم الشهادات والتعليم (Certifications) -->
-    <section id="certifications" class="py-16 md:py-24 bg-accent-bg">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-4xl font-bold mb-12 text-gray-900 border-b-4 border-primary inline-block pb-1">التعليم والشهادات</h2>
-
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                
-                <!-- شهادة 1: مسار تحليل البيانات الأساسي -->
-                <div class="data-card bg-white p-6">
-                    <i class="fas fa-graduation-cap skill-icon text-4xl mb-3"></i>
-                    <h3 class="text-xl font-bold text-primary mb-2">شهادة تحليل البيانات المتقدم</h3>
-                    <p class="text-gray-700">منصة [اسم المنصة - Coursera/Udemy/Udacity]</p>
-                    <p class="text-sm text-gray-500 mt-2">تغطية شاملة لـ SQL، Python (Pandas)، والإحصاء.</p>
-                </div>
-
-                <!-- شهادة 2: إتقان Python للتحليل -->
-                <div class="data-card bg-white p-6">
-                    <i class="fab fa-python skill-icon text-4xl mb-3"></i>
-                    <h3 class="text-xl font-bold text-primary mb-2">إتقان Python للتحليل الإحصائي</h3>
-                    <p class="text-gray-700">مؤسسة [اسم المؤسسة التعليمية]</p>
-                    <p class="text-sm text-gray-500 mt-2">التركيز على Scikit-learn والتعامل مع السلاسل الزمنية.</p>
-                </div>
-
-                <!-- شهادة 3: تصور البيانات (Tableau/Power BI) -->
-                <div class="data-card bg-white p-6">
-                    <i class="fas fa-chart-bar skill-icon text-4xl mb-3"></i>
-                    <h3 class="text-xl font-bold text-primary mb-2">تصميم لوحات معلومات احترافية</h3>
-                    <p class="text-gray-700">Tableau Specialist / Power BI Expert</p>
-                    <p class="text-sm text-gray-500 mt-2">تحويل البيانات المعقدة إلى قصص مرئية بسيطة.</p>
-                </div>
+    <!-- تقرير الاختبار المنبثق (Modal) -->
+    <div id="reportModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-[2000] p-4">
+        <div class="pro-card w-full max-w-4xl max-h-[95vh] overflow-y-auto p-6">
+            <div class="flex justify-between items-center mb-4 border-b border-rose-500 pb-3">
+                <h3 class="text-3xl font-bold text-rose-400">تقرير نتائج الاختبار الشامل</h3>
+                <button onclick="window.hideReportModal()" class="text-gray-400 hover:text-white transition">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
             </div>
-            <p class="mt-8 text-gray-600">
-                أنا ملتزم بالتعلم المستمر ومتابعة أحدث التقنيات في مجال تحليل البيانات والذكاء الاصطناعي.
-            </p>
+            <div id="report-content" class="text-sm space-y-4">
+                <!-- محتوى التقرير هنا -->
+            </div>
+            <button onclick="window.hideReportModal()" class="w-full mt-6 bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700">
+                إغلاق التقرير والعودة للوحة القيادة
+            </button>
         </div>
-    </section>
+    </div>
 
-    <!-- قسم المشاريع (Projects) -->
-    <section id="projects" class="py-16 md:py-24 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-4xl font-bold mb-12 text-gray-900 text-center border-b-4 border-primary inline-block pb-1">دراسات حالة وتحليل مشاريع</h2>
 
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <!-- 3. شاشة سجل المراجعة (مخفية) -->
+    <div id="history-view" class="content-view hidden">
+        <h2 class="text-3xl font-bold text-indigo-400 mb-6 text-center">مجلة التعلم ومراجعة الاختبارات الجزئية</h2>
+        <div id="quiz-history-container" class="space-y-8 max-w-4xl mx-auto">
+            <p id="loading-history-message" class="text-center text-gray-400 mt-10">جاري تحميل سجل التقدم...</p>
+        </div>
+    </div>
+
+
+    <!-- نافذة الاختبار المنبثقة (Modal) للـ Quiz الخاص بالـ Roadmap -->
+    <div id="quizModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4">
+        <div class="pro-card w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold text-indigo-400" id="quiz-modal-title">اختبار المهمة</h3>
+                <button onclick="window.hideQuizModal()" class="text-gray-400 hover:text-white transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <p class="text-sm text-gray-400 mb-4" id="quiz-modal-description"></p>
+
+            <form id="quiz-form" onsubmit="window.submitQuiz(event)">
+                <!-- حقل تسجيل الوقت -->
+                <div class="mb-6">
+                    <label for="timeSpent" class="block text-sm font-medium text-gray-300 mb-2">الوقت المستغرق (بالساعات - اختياري)</label>
+                    <input type="number" step="0.1" min="0" id="timeSpent" name="timeSpent" placeholder="مثل: 2.5" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+
+                <!-- أسئلة الاختبار -->
+                <div id="quiz-questions-container" class="space-y-6">
+                    <!-- سيتم إضافة الأسئلة هنا ديناميكياً -->
+                </div>
+
+                <div id="quiz-message" class="mt-4 p-3 rounded-lg text-sm hidden"></div>
+
+                <button type="submit" class="w-full mt-6 btn-primary text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-600 transition duration-150">
+                    إرسال الإجابات
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        // استيراد مكتبات Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // المتغيرات العامة (استخدام var لـ Anti-Redeclaration Strategy)
+        var firebaseConfig, app, db, auth;
+        var userId = null;
+        var currentProgress = {};
+        var currentTaskData = null;
+        var skillMasteryChartInstance = null;
+        var weeklyPaceChartInstance = null;
+        var currentView = 'tracker'; // حالة العرض الحالية
+        var totalRoadmapTasks = 0; // إجمالي المهام في خارطة الطريق
+        
+        // متغيرات الاختبار الشامل المتسلسل
+        var examTimerInterval = null;
+        var examTimeRemaining = 45 * 60; // 45 دقيقة بالثواني
+        var currentExamStage = 0; // 0: SQL/Excel, 1: Python/Viz, 2: Stats/ML
+        var currentExamAnswers = {}; // تخزين إجابات الاختبار الشامل مؤقتاً
+
+        // 1. تهيئة Firebase
+        try {
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+            
+            if (Object.keys(firebaseConfig).length === 0) {
+                console.error("Firebase config is missing.");
+                document.getElementById('auth-status').textContent = 'خطأ: لم يتم العثور على إعدادات Firebase.';
+            } else {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+            }
+        } catch (e) {
+            console.error("Firebase Initialization Error:", e);
+            document.getElementById('auth-status').textContent = 'خطأ في تهيئة Firebase: ' + e.message;
+        }
+
+        // 2. تعريف مسارات Firestore (استخدام صيغة الدالة القياسية)
+        function getProgressDocRef() {
+            if (!userId) return null;
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const path = `artifacts/${appId}/users/${userId}/data_analysis_data/roadmap_progress`;
+            return doc(db, path);
+        }
+
+        function getExamResultsDocRef() {
+            if (!userId) return null;
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const path = `artifacts/${appId}/users/${userId}/data_analysis_data/comprehensive_results`;
+            return doc(db, path);
+        }
+
+        // 3. دالة المصادقة
+        async function authenticateUser() {
+            try {
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
                 
-                <!-- مشروع 1: تحليل سلوك العملاء -->
-                <div class="data-card bg-gray-50 rounded-xl shadow-lg p-6 flex flex-col h-full">
-                    <i class="fas fa-users-viewfinder text-primary text-3xl mb-3"></i>
-                    <h3 class="text-2xl font-bold mb-3 text-primary">1. تقسيم العملاء ونموذج الانقطاع</h3>
-                    <p class="text-gray-700 mb-4 flex-grow">
-                        تحليل RFM متقدم لتحديد شرائح العملاء الاستراتيجية وتطوير نماذج التنبؤ بخطر التوقف عن الشراء (Churn).
-                    </p>
-                    <div class="mt-auto">
-                        <span class="inline-block bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full mb-3">Python</span>
-                        <span class="inline-block bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full mb-3 mr-2">Machine Learning</span>
-                        <div class="flex space-x-4 space-x-reverse mt-4 border-t border-gray-200 pt-3">
-                            <a href="#" class="text-primary hover:underline font-medium flex items-center"><i class="fas fa-file-alt ml-1 text-sm"></i> عرض الدراسة</a>
-                            <a href="#" class="text-gray-600 hover:text-gray-900 font-medium flex items-center"><i class="fab fa-github ml-1 text-sm"></i> كود المشروع</a>
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        document.getElementById('auth-status').textContent = 'تم تسجيل الدخول بنجاح.';
+                        document.getElementById('user-id-display').textContent = `معرّف المستخدم: ${userId}`;
+                        document.getElementById('user-id-display').classList.remove('hidden');
+                        loadProgress();
+                        loadComprehensiveResults();
+                    } else {
+                        userId = null;
+                        document.getElementById('auth-status').textContent = 'تم تسجيل الخروج.';
+                        document.getElementById('user-id-display').classList.add('hidden');
+                        renderRoadmap(); // عرض الخريطة حتى بدون بيانات
+                        renderComprehensiveExam(); // عرض الاختبار
+                        renderQuizHistory(); // عرض سجل المراجعة
+                    }
+                });
+
+            } catch (error) {
+                console.error("Authentication Error:", error);
+                document.getElementById('auth-status').textContent = `خطأ في المصادقة: ${error.message}`;
+                renderRoadmap();
+                renderComprehensiveExam();
+                renderQuizHistory();
+            }
+        }
+
+        // 4. دالة تحميل التقدم من Firestore (لخريطة الطريق)
+        function loadProgress() {
+            const docRef = getProgressDocRef();
+            if (!docRef) return;
+
+            onSnapshot(docRef, (doc) => {
+                if (doc.exists()) {
+                    currentProgress = doc.data();
+                } else {
+                    currentProgress = {};
+                }
+                renderRoadmap();
+                calculateOverallProgress();
+                renderQuizHistory(); // تحديث سجل المراجعة
+            }, (error) => {
+                console.error("Error loading roadmap progress:", error);
+            });
+        }
+
+        // 5. دالة تحميل نتائج الاختبار الشامل
+        var comprehensiveResults = null;
+        function loadComprehensiveResults() {
+            const docRef = getExamResultsDocRef();
+            if (!docRef) return;
+
+            onSnapshot(docRef, (doc) => {
+                if (doc.exists()) {
+                    comprehensiveResults = doc.data();
+                    console.log("Comprehensive results loaded:", comprehensiveResults);
+                } else {
+                    comprehensiveResults = null;
+                }
+                renderComprehensiveExam();
+            }, (error) => {
+                console.error("Error loading comprehensive results:", error);
+            });
+        }
+
+        // 6. بيانات خريطة الطريق (مرتبة ومنظمة منطقياً)
+        const roadmapData = [
+            {
+                month: "الشهر الأول: الأساسيات والبرمجة (SQL/Python)",
+                skillKey: "SQL_Excel",
+                skillLabel: "SQL/Excel والبرمجة الأساسية",
+                tasks: [
+                    // الترتيب 1
+                    { id: "M1_T1", name: "إتقان SQL الأساسية (SELECT, JOINs, Aggregate)", description: "تعلم أوامر SELECT، WHERE، ORDER BY، واستخدام الدوال التجميعية والربط.", quiz: [
+                        { question: "ما هي وظيفة الأمر `WHERE` في SQL؟", options: [{ text: "ترتيب النتائج", correct: false }, { text: "تصفية السجلات", correct: true }, { text: "حساب المتوسط", correct: false }, { text: "تجميع البيانات", correct: false }] },
+                        { question: "ما هو الـ `LEFT JOIN`؟", options: [{ text: "يعيد جميع سجلات الجدول الأيمن", correct: true }, { text: "يعيد السجلات المتطابقة فقط", correct: false }, { text: "يعيد جميع سجلات الجدول الأيسر", correct: false }, { text: "يقوم بإضافة سجلات جديدة", correct: false }] },
+                    ] },
+                    // الترتيب 2
+                    { id: "M1_T2", name: "تنظيف البيانات في Excel/Python (TRIM/Pandas)", description: "تنظيف البيانات في Excel (TRIM, REPLACE, VLOOKUP) واستخدام Pandas لتحميل ومعالجة البيانات.", quiz: [
+                        { question: "ما هي استخدامات الـ Pivot Table الرئيسية في Excel؟", options: [{ text: "تنفيذ دوال رياضية معقدة", correct: false }, { text: "تجميع وتلخيص البيانات الكبيرة", correct: true }, { text: "إنشاء رسوم بيانية ثلاثية الأبعاد", correct: false }, { text: "تعديل محتوى الخلايا", correct: false }] },
+                        { question: "ما هو الـ DataFrame في Pandas؟", options: [{ text: "قائمة بأسماء المتغيرات", correct: false }, { text: "هيكل بيانات ثنائي الأبعاد (جدول)", correct: true }, { text: "دالة رياضية", correct: false }, { text: "نوع من الملفات", correct: false }] },
+                    ] },
+                    // الترتيب 3
+                    { id: "M1_T3", name: "جمع البيانات (Databases, CSVs, APIs)", description: "التدرب على جمع البيانات من مصادر مختلفة (Databases, CSV Files, APIs) وتحويلها إلى DataFrame.", quiz: [
+                        { question: "ما هي إحدى طرق التعامل مع القيم المفقودة (NaN)؟", options: [{ text: "استبدالها برقم عشوائي", correct: false }, { text: "حذف الصفوف أو ملؤها بالمتوسط/الوسيط", correct: true }, { text: "تجاهلها تماماً", correct: false }, { text: "تغيير نوع البيانات", correct: false }] },
+                        { question: "لماذا يعد توحيد أنواع البيانات (Data Normalization) مهماً؟", options: [{ text: "لتسريع التحميل", correct: false }, { text: "لتقليل مساحة التخزين", correct: false }, { text: "لجعل المتغيرات قابلة للمقارنة والتحليل", correct: true }, { text: "لإضافة أعمدة جديدة", correct: false }] },
+                    ] },
+                    // الترتيب 4
+                    { id: "M1_T4", name: "الدوال المتقدمة في SQL (Window Functions)", description: "استخدام الدوال التجميعية المتقدمة ودوال النافذة (Window Functions) لتحليل الأداء والتصنيف.", quiz: [
+                         { question: "ماذا يقصد بالـ Window Function in SQL؟", options: [{ text: "إجراء عمليات تجميع على مجموعة من الصفوف", correct: true }, { text: "نافذة منبثقة للرسائل", correct: false }, { text: "تقسيم الشاشة إلى عدة نوافذ", correct: false }, { text: "دالة تستخدم في Excel فقط", correct: false }] },
+                        { question: "أي دالة تستخدم لحساب عدد السجلات في SQL؟", options: [{ text: "AVERAGE", correct: false }, { text: "COUNT", correct: true }, { text: "SUM", correct: false }, { text: "GROUP", correct: false }] },
+                    ] },
+                ]
+            },
+            {
+                month: "الشهر الثاني: الإحصاء والتصور البياني (Visualization)",
+                skillKey: "Python_Visualization",
+                skillLabel: "Python الإحصاء والتصور",
+                tasks: [
+                    // الترتيب 5
+                    { id: "M2_T1", name: "الإحصاء الوصفي (Mean, Median, Mode, Dispersion)", description: "حساب مقاييس النزعة المركزية (Mean, Median, Mode) ومقاييس التشتت (Range, Variance, Standard Deviation).", quiz: [
+                        { question: "ما هو مقياس النزعة المركزية الأفضل استخداماً للبيانات التي تحتوي على قيم متطرفة (Outliers)؟", options: [{ text: "الوسط الحسابي (Mean)", correct: false }, { text: "الوسيط (Median)", correct: true }, { text: "المنوال (Mode)", correct: false }, { text: "الانحراف المعياري", correct: false }] },
+                        { question: "ماذا يقيس الـ Standard Deviation؟", options: [{ text: "متوسط القيم", correct: false }, { text: "مدى تشتت القيم حول الوسط", correct: true }, { text: "شكل التوزيع", correct: false }, { text: "عدد السجلات", correct: false }] },
+                    ] },
+                    // الترتيب 6
+                    { id: "M2_T2", name: "تصور البيانات الأساسي (Matplotlib/Seaborn)", description: "إنشاء الرسوم البيانية الأساسية (Bar, Line, Scatter, Histogram) باستخدام Matplotlib وSeaborn.", quiz: [
+                        { question: "ما هي المكتبة الشائعة لتصور البيانات الإحصائية المعقدة في Python؟", options: [{ text: "Matplotlib", correct: false }, { text: "Seaborn", correct: true }, { text: "Scipy", correct: false }, { text: "Keras", correct: false }] },
+                        { question: "أي نوع من المخططات هو الأفضل لإظهار التوزيع؟", options: [{ text: "مخطط دائري (Pie Chart)", correct: false }, { text: "مخطط الانتشار (Scatter Plot)", correct: false }, { text: "مدرج تكراري (Histogram)", correct: true }, { text: "مخطط خطي (Line Chart)", correct: false }] },
+                    ] },
+                    // الترتيب 7
+                    { id: "M2_T3", name: "التحليل التشخيصي (Diagnostic Analysis)", description: "تعلم كيفية استخدام المخططات والمقاييس لتحديد سبب النتائج (لماذا حدث هذا؟) والتعامل مع الارتباط (Correlation).", quiz: [
+                        { question: "ما هو الهدف الرئيسي للتحليل التشخيصي (Diagnostic Analysis)؟", options: [{ text: "التنبؤ بما سيحدث", correct: false }, { text: "فهم سبب حدوث شيء ما", correct: true }, { text: "تجميع البيانات", correct: false }, { text: "توصية باتخاذ إجراء", correct: false }] },
+                        { question: "ماذا يعني معامل الارتباط (Correlation) القريب من الصفر؟", options: [{ text: "علاقة خطية قوية", correct: false }, { text: "لا توجد علاقة خطية تذكر", correct: true }, { text: "علاقة عكسية قوية", correct: false }, { text: "البيانات متطابقة", correct: false }] },
+                    ] },
+                    // الترتيب 8
+                    { id: "M2_T4", name: "أدوات لوحات البيانات (Tableau/PowerBI Concept)", description: "فهم كيفية عمل أدوات BI (Tableau/PowerBI) وكيفية بناء لوحة بيانات تفاعلية بسيطة.", quiz: [
+                        { question: "ما هي ميزة الـ Slicer في Excel/PowerBI؟", options: [{ text: "تغيير لون الخلايا", correct: false }, { text: "تصفية البيانات بسرعة وتفاعلية", correct: true }, { text: "حماية ورقة العمل بكلمة سر", correct: false }, { text: "إضافة معادلات معقدة", correct: false }] },
+                        { question: "ما هو الـ Star Schema المستخدم في Data Warehouse؟", options: [{ text: "طريقة لتنظيف البيانات", correct: false }, { text: "هيكل لتخزين البيانات بصيغة مُحسّنة للتقارير", correct: true }, { text: "نموذج لتعلم الآلة", correct: false }, { text: "طريقة لجمع البيانات من API", correct: false }] },
+                    ] },
+                ]
+            },
+            {
+                month: "الشهر الثالث: النمذجة واتخاذ القرار (ML/Decision)",
+                skillKey: "Stats_ML",
+                skillLabel: "النماذج الإحصائية وتعلم الآلة",
+                tasks: [
+                    // الترتيب 9
+                    { id: "M3_T1", name: "النماذج الإحصائية (الانحدار الخطي)", description: "فهم الانحدار الخطي البسيط والمتعدد وتفسير المعاملات (Predictive Analytics).", quiz: [
+                        { question: "ما هو الهدف الرئيسي لتحليل الانحدار الخطي؟", options: [{ text: "توقع قيمة متغير تابع بناءً على متغيرات مستقلة", correct: true }, { text: "تنظيف البيانات", correct: false }, { text: "إنشاء رسوم بيانية معقدة", correct: false }, { text: "حذف السجلات المكررة", correct: false }] },
+                        { question: "ماذا يمثل معامل الانحدار (Slope)؟", options: [{ text: "نقطة التقاطع مع محور Y", correct: false }, { text: "معدل التغير في Y لكل وحدة تغير في X", correct: true }, { text: "مقدار الخطأ في النموذج", correct: false }, { text: "القيم المفقودة في النموذج", correct: false }] },
+                    ] },
+                    // الترتيب 10
+                    { id: "M3_T2", name: "أساسيات تعلم الآلة (Supervised & Unsupervised)", description: "مفاهيم التعلم الخاضع للإشراف (Decision Trees, Logistic Regression) وغير الخاضع للإشراف (K-Means Clustering).", quiz: [
+                        { question: "ما هي خوارزمية K-Means؟", options: [{ text: "تصنيف السجلات إلى مجموعات (Clustering)", correct: true }, { text: "توقع القيمة المستقبلية", correct: false }, { text: "اختبار الفرضيات", correct: false }, { text: "تصفية البيانات", correct: false }] },
+                        { question: "في التعلم غير الخاضع للإشراف (Unsupervised)، تكون بيانات الإخراج:", options: [{ text: "موجودة ومصنفة", correct: false }, { text: "مفقودة تماماً", correct: false }, { text: "غير موجودة أو غير مصنفة مسبقاً", correct: true }, { text: "مفهرسة بواسطة SQL", correct: false }] },
+                    ] },
+                    // الترتيب 11
+                    { id: "M3_T3", name: "توصيل النتائج والقصص المصورة (Prescriptive Analysis)", description: "توصيل النتائج بوضوح، وصياغة التوصيات العملية (Prescriptive Analytics: ما الذي يجب فعله؟).", quiz: [
+                        { question: "ما هو العنصر الأكثر أهمية في توصيل قصة البيانات (Data Storytelling)؟", options: [{ text: "البيانات الخام فقط", correct: false }, { text: "التركيز على الرؤى القابلة للتنفيذ", correct: true }, { text: "استخدام أكبر عدد ممكن من المخططات", correct: false }, { text: "تضمين جميع الأكواد البرمجية", correct: false }] },
+                        { question: "ماذا يجب أن تكون الخطوة الأخيرة في أي تحليل بيانات؟", options: [{ text: "حفظ الملف", correct: false }, { text: "توصية واضحة وقابلة للتطبيق (Recommendation)", correct: true }, { text: "إرسال البيانات إلى المدير", correct: false }, { text: "تنفيذ المزيد من الاختبارات الإحصائية", correct: false }] },
+                    ] },
+                    // الترتيب 12
+                    { id: "M3_T4", name: "مشروع المحفظة النهائي والتطوير المستمر", description: "تطبيق جميع المهارات في مشروع نهائي واحد وعرضه في محفظة الأعمال والاطلاع على Big Data/AI Roadmap.", quiz: [
+                        { question: "ما هو الغرض الأساسي من محفظة أعمال تحليل البيانات؟", options: [{ text: "عرض الشهادات فقط", correct: false }, { text: "عرض مهاراتك وقدرتك على حل مشاكل حقيقية", correct: true }, { text: "الحصول على درجات عالية في الدراسة", correct: false }, { text: "نسخ مشاريع الآخرين", correct: false }] },
+                        { question: "ماذا يعني الـ P-Value الصغير (مثل 0.01)؟", options: [{ text: "يجب قبول الفرضية الصفرية", correct: false }, { text: "يجب رفض الفرضية الصفرية", correct: true }, { text: "البيانات غير كافية", correct: false }, { text: "البيانات نظيفة", correct: false }] },
+                    ] },
+                ]
+            }
+        ];
+        
+        // حساب إجمالي المهام لـ شريط التقدم الكلي
+        totalRoadmapTasks = roadmapData.reduce((acc, group) => acc + group.tasks.length, 0);
+
+
+        // 7. بيانات الاختبار الشامل الجديد (مقسمة إلى مراحل)
+        const comprehensiveExamQuestions = [
+            // المرحلة 1: SQL/Data Wrangling (5 أسئلة)
+            { stage: 1, category: "SQL/Data Wrangling", question: "لإرجاع أعلى 10% من السجلات بناءً على عمود الراتب في SQL، ما هي دالة النافذة الأكثر فعالية؟", correct: "NTILE(10) وتصفية النتائج التي تحمل القيمة 1", options: [
+                { text: "RANK() وتحديد النتائج", isCorrect: false, rationale: "دالة RANK() تعطي ترتيباً، لكن NTILE(10) تقسم البيانات إلى 10 مجموعات متساوية، حيث أن المجموعة 1 تمثل العشرة الأوائل (الأعلى 10%)." },
+                { text: "PERCENT_RANK()", isCorrect: false, rationale: "PERCENT_RANK() تحسب النسبة المئوية لترتيب الصف، وهي طريقة غير مباشرة لتحديد النسبة المئوية العليا." },
+                { text: "NTILE(10) وتصفية النتائج التي تحمل القيمة 1", isCorrect: true, rationale: "دالة NTILE(N) تقسم مجموعة النتائج إلى N مجموعة متساوية تقريباً؛ المجموعة الأولى (1) تمثل أعلى نسبة مئوية." },
+                { text: "ROW_NUMBER() وتصفية النتائج", isCorrect: false, rationale: "ROW_NUMBER() تعطي رقماً تسلسلياً عادياً ولا علاقة لها بالتقسيم النسبي للبيانات." }
+            ] },
+            { stage: 1, category: "SQL/Data Wrangling", question: "لدمج صفين في جدولين مختلفين يحتويان على بعض الأعمدة المتطابقة والبعض غير المتطابق، دون تكرار الصفوف المشتركة، نستخدم:", correct: "UNION", options: [
+                { text: "INNER JOIN", isCorrect: false, rationale: "INNER JOIN تجمع الأعمدة أفقياً (توسيع البيانات)، بينما UNION تجمع الصفوف عمودياً (إضافة المزيد من السجلات)." },
+                { text: "UNION ALL", isCorrect: false, rationale: "UNION ALL تجمع الصفوف ولكنها تسمح بالتكرار (Duplicates)، بينما UNION تزيل الصفوف المتكررة." },
+                { text: "UNION", isCorrect: true, rationale: "UNION تجمع مجموعات النتائج من استعلامين أو أكثر، وتزيل الصفوف المتكررة تلقائياً." },
+                { text: "LEFT JOIN", isCorrect: false, rationale: "LEFT JOIN تستخدم للربط الأفقي للأعمدة وليس للجمع العمودي للصفوف." }
+            ] },
+            { stage: 1, category: "SQL/Data Wrangling", question: "في Pandas، كيف يمكن استبدال جميع القيم المفقودة (NaN) في DataFrame بمتوسط (Mean) العمود المقابل؟", correct: "df.fillna(df.mean())", options: [
+                { text: "df.dropna(how='mean')", isCorrect: false, rationale: "dropna تستخدم لحذف الصفوف أو الأعمدة التي تحتوي على قيم مفقودة، ولا تستبدلها." },
+                { text: "df.fillna(method='mean')", isCorrect: false, rationale: "لا يوجد 'mean' كطريقة في fillna؛ بل يجب تمرير القيمة نفسها كمعامل." },
+                { text: "df.fillna(df.mean())", isCorrect: true, rationale: "تقوم df.mean() بحساب متوسط كل عمود، وتقوم fillna باستخدام هذه المتوسطات لملء قيم NaN." },
+                { text: "df.replace('NaN', df.mean())", isCorrect: false, rationale: "replace تستخدم لاستبدال قيمة معينة (مثل 'NaN' كنص) وليس NaN (كقيمة رقمية مفقودة)." }
+            ] },
+            { stage: 1, category: "SQL/Data Wrangling", question: "ما هو الغرض الأساسي من استخدام `GROUP BY` مع دالة تجميعية في SQL؟", correct: "تطبيق دالة التجميع على مجموعة من الصفوف التي تتشابه في قيمة عمود معين", options: [
+                { text: "تحديد ترتيب عرض النتائج", isCorrect: false, rationale: "ORDER BY هي المسؤولة عن ترتيب النتائج." },
+                { text: "تصفية الصفوف التي لا تستوفي شرط معين", isCorrect: false, rationale: "WHERE و HAVING هي المسؤولة عن التصفية." },
+                { text: "تطبيق دالة التجميع على مجموعة من الصفوف التي تتشابه في قيمة عمود معين", isCorrect: true, rationale: "GROUP BY تعمل على تجميع السجلات التي تحمل نفس القيمة في عمود أو أكثر، ثم يتم تطبيق دالة تجميعية (مثل SUM) على كل مجموعة." },
+                { text: "إضافة عمود جديد للجدول", isCorrect: false, rationale: "لا تستخدم GROUP BY لهذا الغرض." }
+            ] },
+            { stage: 1, category: "SQL/Data Wrangling", question: "ما هي الطريقة الأكثر كفاءة للتعامل مع القيم المتطرفة (Outliers) التي يجب إزالتها في مجموعة بيانات كبيرة؟", correct: "استخدام تقنيات إحصائية مثل المدى الربيعي (IQR) لتحديدها وحذف الصفوف المتأثرة", options: [
+                { text: "إزالتها يدوياً من خلال التمرير على كل صف", isCorrect: false, rationale: "هذا غير عملي في مجموعات البيانات الكبيرة ويستهلك وقتاً طويلاً جداً." },
+                { text: "استخدام دالة TRIM في Excel", isCorrect: false, rationale: "TRIM تستخدم لإزالة المسافات الزائدة من النصوص وليست مخصصة للقيم المتطرفة." },
+                { text: "استخدام تقنيات إحصائية مثل المدى الربيعي (IQR) لتحديدها وحذف الصفوف المتأثرة", isCorrect: true, rationale: "طريقة IQR (Interquartile Range) هي طريقة إحصائية قياسية وفعالة لتحديد القيم المتطرفة في البيانات العددية الكبيرة بشكل آلي." },
+                { text: "ملؤها بقيمة الصفر", isCorrect: false, rationale: "ملء القيم المتطرفة بالصفر يشوه التوزيع ويؤدي إلى نتائج إحصائية مضللة." }
+            ] },
+
+            // المرحلة 2: Python/Visualization (5 أسئلة)
+            { stage: 2, category: "Python/Visualization", question: "ما هي أفضل مكتبة في Python لإنشاء رسوم بيانية إحصائية معقدة ومهنية (مثل Violin Plot أو Heatmap)؟", correct: "Seaborn", options: [
+                { text: "Numpy", isCorrect: false, rationale: "Numpy هي مكتبة للحسابات العددية والتعامل مع المصفوفات، وليست متخصصة في التصور البياني." },
+                { text: "Scipy", isCorrect: false, rationale: "Scipy هي مكتبة للحوسبة العلمية والتحليل الإحصائي المتقدم، وليست مخصصة للتصور البياني." },
+                { text: "Matplotlib", isCorrect: false, rationale: "Matplotlib هي أساس التصور البياني، لكن Seaborn مبنية عليها وتوفر رسوماً إحصائية أكثر تعقيداً وجمالية بشكل أسهل." },
+                { text: "Seaborn", isCorrect: true, rationale: "Seaborn متخصصة في إنشاء رسوم بيانية إحصائية جذابة ومعقدة (مثل Violin Plots) وهي خيار مفضل للمحللين." }
+            ] },
+            { stage: 2, category: "Python/Visualization", question: "في الإحصاء الوصفي، إذا كان الوسط (Mean) أكبر بكثير من الوسيط (Median)، فإن التوزيع غالباً ما يكون:", correct: "ملتوياً نحو اليمين (Right-skewed)", options: [
+                { text: "متماثلاً (Symmetric)", isCorrect: false, rationale: "في التوزيع المتماثل، يكون الوسط والوسيط متساويين تقريباً." },
+                { text: "ملتوياً نحو اليسار (Left-skewed)", isCorrect: false, rationale: "في التوزيع الملتوي نحو اليسار، يكون الوسط أصغر من الوسيط." },
+                { text: "طبيعياً (Normal)", isCorrect: false, rationale: "التوزيع الطبيعي هو حالة خاصة من التوزيع المتماثل." },
+                { text: "ملتوياً نحو اليمين (Right-skewed)", isCorrect: true, rationale: "عندما يكون هناك ذيل طويل للقيم العالية (قيم متطرفة إيجابية)، يتم سحب الوسط نحو اليمين ليصبح أكبر من الوسيط." }
+            ] },
+            { stage: 2, category: "Python/Visualization", question: "أي نوع من التحليل يجيب على السؤال: 'لماذا انخفضت مبيعات المنتج X في الربع الأخير؟'؟", correct: "Diagnostic Analysis (تحليل تشخيصي)", options: [
+                { text: "Descriptive Analysis (تحليل وصفي)", isCorrect: false, rationale: "التحليل الوصفي يجيب على سؤال 'ماذا حدث؟'." },
+                { text: "Predictive Analysis (تحليل تنبؤي)", isCorrect: false, rationale: "التحليل التنبؤي يجيب على سؤال 'ماذا سيحدث؟'." },
+                { text: "Diagnostic Analysis (تحليل تشخيصي)", isCorrect: true, rationale: "التحليل التشخيصي يجيب على سؤال 'لماذا حدث هذا؟' من خلال البحث عن الأسباب الجذرية." },
+                { text: "Prescriptive Analysis (تحليل إرشادي)", isCorrect: false, rationale: "التحليل الإرشادي يجيب على سؤال 'ما الذي يجب فعله؟'." }
+            ] },
+            { stage: 2, category: "Python/Visualization", question: "ما هو الهدف من استخدام مقاييس التشتت (مثل Standard Deviation) في الإحصاء الوصفي؟", correct: "قياس مدى انتشار أو تباعد البيانات عن القيمة المركزية", options: [
+                { text: "تحديد القيمة الأكثر تكراراً في البيانات", isCorrect: false, rationale: "هذا هو دور المنوال (Mode)." },
+                { text: "قياس مدى انتشار أو تباعد البيانات عن القيمة المركزية", isCorrect: true, rationale: "مقاييس التشتت تقيس مدى تجانس أو تباين مجموعة البيانات." },
+                { text: "التنبؤ بالقيم المستقبلية", isCorrect: false, rationale: "هذا يقع ضمن نطاق التحليل التنبؤي." },
+                { text: "تحديد العلاقة بين متغيرين", isCorrect: false, rationale: "هذا هو دور الارتباط (Correlation)." }
+            ] },
+            { stage: 2, category: "Python/Visualization", question: "عند استخدام أدوات BI (مثل PowerBI/Tableau)، أي نموذج بيانات هو الأفضل لزيادة كفاءة استرجاع التقارير؟", correct: "Star Schema (نموذج النجمة)", options: [
+                { text: "E-R Diagram", isCorrect: false, rationale: "E-R Diagram هو نموذج مفاهيمي يستخدم في مرحلة التصميم، وليس نموذجاً محسناً لأداء التقارير." },
+                { text: "Normalization (التطبيع)", isCorrect: false, rationale: "التطبيع (Normalization) يقلل من تكرار البيانات ولكنه قد يزيد من تعقيد الاستعلامات اللازمة للتقارير." },
+                { text: "Star Schema (نموذج النجمة)", isCorrect: true, rationale: "نموذج النجمة (Star Schema) يقلل من عدد الروابط (JOINs) المطلوبة للاستعلام، مما يزيد من سرعة وأداء استرجاع التقارير في مستودعات البيانات." },
+                { text: "Data Lake (بحيرة البيانات)", isCorrect: false, rationale: "بحيرة البيانات مكان لتخزين البيانات بصيغتها الأصلية، وليست نموذجاً هيكلياً لتعزيز الأداء." }
+            ] },
+
+            // المرحلة 3: Stats/ML/Decision Making (5 أسئلة)
+            { stage: 3, category: "Stats/ML/Decision Making", question: "عند استخدام نموذج الانحدار الخطي (Linear Regression)، ماذا يعني معامل (Coefficient) بقيمة -0.8؟", correct: "وجود علاقة سلبية قوية: زيادة المتغير المستقل تؤدي لانخفاض كبير في المتغير التابع", options: [
+                { text: "لا توجد علاقة خطية", isCorrect: false, rationale: "قيمة قريبة من الصفر تشير إلى عدم وجود علاقة." },
+                { text: "علاقة إيجابية قوية جداً", isCorrect: false, rationale: "قيمة قريبة من +1 (مثل 0.8) تشير إلى علاقة إيجابية قوية." },
+                { text: "وجود علاقة سلبية قوية: زيادة المتغير المستقل تؤدي لانخفاض كبير في المتغير التابع", isCorrect: true, rationale: "القيمة السالبة تعني علاقة عكسية، والقيمة القريبة من -1 تعني أن العلاقة قوية." },
+                { text: "وجود ارتباط خطي متعدد (Multicollinearity)", isCorrect: false, rationale: "Multicollinearity مشكلة تؤثر على استقرار المعاملات ولا تستدل مباشرة من قيمة معامل واحد." }
+            ] },
+            { stage: 3, category: "Stats/ML/Decision Making", question: "لتقسيم قاعدة بيانات العملاء إلى مجموعات (Segments) دون وجود نتائج سابقة مصنفة، نستخدم:", correct: "Unsupervised Learning (التعلم غير الخاضع للإشراف) مثل K-Means", options: [
+                { text: "Supervised Learning (التعلم الخاضع للإشراف)", isCorrect: false, rationale: "التعلم الخاضع للإشراف يتطلب نتائج مصنفة مسبقاً (Labels) للتدريب عليها." },
+                { text: "Reinforcement Learning", isCorrect: false, rationale: "هذا النوع يستخدم لاتخاذ قرارات تسلسلية بناءً على المكافأة والعقاب، وليس للتصنيف (Clustering)." },
+                { text: "Unsupervised Learning (التعلم غير الخاضع للإشراف) مثل K-Means", isCorrect: true, rationale: "التعلم غير الخاضع للإشراف يستخدم لاكتشاف الأنماط والهياكل المخفية في البيانات غير المصنفة (مثل تقسيم العملاء)." },
+                { text: "Deep Learning (التعلم العميق)", isCorrect: false, rationale: "التعلم العميق هو تقنية يمكن استخدامها في كلا النوعين، ولكنه ليس هو النوع الإحصائي المطلوب تحديداً." }
+            ] },
+            { stage: 3, category: "Stats/ML/Decision Making", question: "ما هو الدور الرئيسي لـ 'Prescriptive Analytics' في اتخاذ القرار؟", correct: "تحديد الإجراء الأفضل الذي يجب اتخاذه لتحقيق هدف معين", options: [
+                { text: "وصف ما حدث في الماضي", isCorrect: false, rationale: "هذا هو الدور الوصفي (Descriptive)." },
+                { text: "فهم سبب حدوث شيء ما", isCorrect: false, rationale: "هذا هو الدور التشخيصي (Diagnostic)." },
+                { text: "التنبؤ بما سيحدث في المستقبل", isCorrect: false, rationale: "هذا هو الدور التنبؤي (Predictive)." },
+                { text: "تحديد الإجراء الأفضل الذي يجب اتخاذه لتحقيق هدف معين", isCorrect: true, rationale: "التحليل الإرشادي (Prescriptive) يذهب لأبعد من التنبؤ ليقدم توصيات إجرائية." }
+            ] },
+            { stage: 3, category: "Stats/ML/Decision Making", question: "لتحديد جودة نموذج يتعرف على الاحتيال (حيث تكون حالات الاحتيال نادرة)، أي مقياس أفضل من الدقة (Accuracy)؟", correct: "الاستدعاء (Recall) أو F1-Score", options: [
+                { text: "خطأ المتوسط التربيعي (RMSE)", isCorrect: false, rationale: "RMSE يستخدم لتقييم نماذج الانحدار (Predictive) وليس التصنيف (Classification)." },
+                { text: "R-squared", isCorrect: false, rationale: "R-squared يستخدم لتقييم نماذج الانحدار." },
+                { text: "الاستدعاء (Recall) أو F1-Score", isCorrect: true, rationale: "في الحالات النادرة (Imbalanced Data)، الدقة تكون مضللة. Recall أو F1-Score أفضل لأنها تركز على قدرة النموذج على التقاط الحالات الإيجابية النادرة (الاحتيال)." },
+                { text: "Mean Absolute Error", isCorrect: false, rationale: "Mean Absolute Error يستخدم لتقييم نماذج الانحدار." }
+            ] },
+            { stage: 3, category: "Stats/ML/Decision Making", question: "عند تقديم نتائج تحليل بيانات معقدة لمدير تنفيذي، ما هو العنصر الأكثر أهمية في الـ Data Storytelling؟", correct: "التركيز على الرؤى (Insights) القابلة للتنفيذ والتوصيات الواضحة", options: [
+                { text: "تضمين جميع أكواد Python و SQL", isCorrect: false, rationale: "الأكواد مفيدة لعلماء البيانات، لكن المديرين التنفيذيين يحتاجون إلى النتائج والتأثير التجاري." },
+                { text: "شرح جميع التفاصيل الإحصائية المعقدة", isCorrect: false, rationale: "التركيز على التفاصيل قد يشتت انتباه متخذ القرار. يجب تبسيط النتائج." },
+                { text: "التركيز على الرؤى (Insights) القابلة للتنفيذ والتوصيات الواضحة", isCorrect: true, rationale: "الهدف من تقديم البيانات هو دفع عملية اتخاذ القرار، وهذا يتطلب رؤى واضحة وتوصيات مباشرة وقابلة للتنفيذ." },
+                { text: "استخدام أكبر عدد ممكن من الرسوم البيانية المتنوعة", isCorrect: false, rationale: "قد تؤدي كثرة المخططات إلى تشتيت الانتباه؛ يجب استخدام المخططات التي تخدم الهدف مباشرة." }
+            ] },
+        ];
+
+
+        // 8. دالة حفظ التقدم (لخريطة الطريق)
+        async function saveProgress() {
+            const docRef = getProgressDocRef();
+            if (!userId) {
+                console.error("Authentication required to save progress.");
+                return;
+            }
+            try {
+                await setDoc(docRef, currentProgress, { merge: true });
+            } catch (e) {
+                console.error("Error saving roadmap progress:", e);
+                // استخدام مربع رسالة مخصص بدلاً من alert
+                document.getElementById('quiz-message').textContent = `خطأ في الحفظ: ${e.message}`;
+                document.getElementById('quiz-message').className = 'mt-4 p-3 rounded-lg text-sm bg-rose-900/50 text-rose-300 block';
+            }
+        }
+
+        // 9. دالة التنقل بين الشاشات (تم تصديرها إلى window)
+        window.switchView = function(viewId) {
+            const fixedTimerEl = document.getElementById('fixed-exam-timer');
+
+            // إظهار/إخفاء المؤقت الثابت بناءً على الشاشة
+            if (viewId === 'exam' && examTimerInterval) {
+                 fixedTimerEl.classList.remove('hidden');
+            } else {
+                 fixedTimerEl.classList.add('hidden');
+                 window.stopExamTimer();
+            }
+            
+            currentView = viewId;
+            document.querySelectorAll('.content-view').forEach(view => {
+                view.classList.add('hidden');
+            });
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+
+            document.getElementById(`${viewId}-view`).classList.remove('hidden');
+            document.getElementById(`nav-${viewId}`).classList.add('active');
+            
+            // إعادة رسم المخططات عند التبديل إلى شاشة Tracker
+            if (viewId === 'tracker') {
+                calculateOverallProgress();
+            }
+            // تحديث محتوى سجل المراجعة عند التبديل إليه
+            if (viewId === 'history') {
+                renderQuizHistory();
+            }
+            // تحديث محتوى الاختبار الشامل عند التبديل إليه
+            if (viewId === 'exam') {
+                renderComprehensiveExam();
+            }
+        }
+
+
+        // 10. حساب التقدم الإجمالي وتكلفة الفرصة (وظائف Tracker)
+        function calculateOverallProgress() {
+            let totalTasks = 0;
+            let completedTasks = 0;
+            let totalHours = 0;
+            let completedSkillGroups = []; // لتوليد prompt
+            let allCompletedTaskNames = []; // لتوليد prompt للمشروع الجديد
+
+            const skillProgress = {}; 
+
+            roadmapData.forEach(skillGroup => {
+                const skillKey = skillGroup.skillKey;
+                let skillTasks = 0;
+                let skillCompleted = 0;
+
+                skillGroup.tasks.forEach(task => {
+                    totalTasks++;
+                    skillTasks++;
+
+                    if (currentProgress[task.id] && currentProgress[task.id].completed) {
+                        completedTasks++;
+                        skillCompleted++;
+                        allCompletedTaskNames.push(task.name); // تسجيل اسم المهمة المكتملة
+                        const hours = parseFloat(currentProgress[task.id].timeSpentHours || 0);
+                        totalHours += hours;
+                    }
+                });
+                skillProgress[skillKey] = {
+                    completed: skillCompleted,
+                    total: skillTasks,
+                    percentage: (skillTasks > 0 ? (skillCompleted / skillTasks) * 100 : 0)
+                };
+
+                if (skillProgress[skillKey].percentage === 100) {
+                    completedSkillGroups.push(skillGroup.skillLabel);
+                }
+            });
+            
+            // تخزين البيانات لـ Gemini
+            window.performanceData = {
+                totalTasks,
+                completedTasks,
+                completedSkillGroups,
+                allCompletedTaskNames, // المهارات التفصيلية المكتملة
+                remainingSkillGroups: roadmapData.filter(g => skillProgress[g.skillKey].percentage < 100).map(g => g.skillLabel)
+            };
+
+            // حساب التقدم الكلي (جديد)
+            const overallPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+            const progressBar = document.getElementById('overall-progress-bar');
+            const progressText = document.getElementById('overall-progress-text');
+
+            if (progressBar && progressText) {
+                 progressBar.style.width = `${overallPercentage.toFixed(0)}%`;
+                 progressText.textContent = `${overallPercentage.toFixed(0)}% إنجاز (${completedTasks} / ${totalTasks} مهمة)`;
+            }
+
+            // تحديث لوحة القيادة
+            const completedTasksEl = document.getElementById('completed-tasks');
+            const totalHoursEl = document.getElementById('total-hours');
+            if(completedTasksEl) completedTasksEl.textContent = `${completedTasks} / ${totalTasks}`;
+            if(totalHoursEl) totalHoursEl.textContent = totalHours.toFixed(2);
+
+            // حساب تكلفة الفرصة
+            const rateEGP = 93.0; // 93 EGP/ساعة
+            const rateUSD = 3.1;  // 3.1 USD/ساعة
+            const costEGP = (totalHours * rateEGP).toFixed(2);
+            const costUSD = (totalHours * rateUSD).toFixed(2);
+            const opportunityEGP = document.getElementById('opportunity-egp');
+            const opportunityUSD = document.getElementById('opportunity-usd');
+            if (opportunityEGP) opportunityEGP.textContent = `${costEGP} EGP`;
+            if (opportunityUSD) opportunityUSD.textContent = `${costUSD} USD`;
+
+            // تحديث المخططات والأوسمة
+            renderSkillMasteryChart(skillProgress);
+            renderWeeklyPaceChart(roadmapData, currentProgress);
+            checkAndDisplayBadges(skillProgress);
+        }
+        
+        // 11. دالة عرض مخطط إتقان المهارات (Chart.js - Donut)
+        function renderSkillMasteryChart(skillProgress) {
+            const ctxEl = document.getElementById('skillMasteryChart');
+            if (!ctxEl) return;
+            const ctx = ctxEl.getContext('2d');
+            
+            const labels = roadmapData.map(g => g.skillLabel);
+            const percentages = roadmapData.map(g => skillProgress[g.skillKey].percentage.toFixed(0));
+            
+            if (skillMasteryChartInstance) {
+                skillMasteryChartInstance.destroy();
+            }
+
+            skillMasteryChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: percentages,
+                        backgroundColor: [
+                            '#8b5cf6', // Indigo 500
+                            '#10b981', // Emerald 500
+                            '#f59e0b'  // Yellow 500
+                        ],
+                        hoverOffset: 10,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#d1d5db' } },
+                        title: { display: false }
+                    }
+                }
+            });
+        }
+
+        // 12. دالة عرض مخطط السرعة الأسبوعية (Chart.js - Bar)
+        function renderWeeklyPaceChart(roadmapData, progress) {
+            const ctxEl = document.getElementById('weeklyPaceChart');
+            if (!ctxEl) return;
+            const ctx = ctxEl.getContext('2d');
+
+            const paceData = [
+                { period: 'أسابيع 1-2', completed: 0, total: 2 },
+                { period: 'أسابيع 3-4', completed: 0, total: 2 },
+                { period: 'أسابيع 5-6', completed: 0, total: 2 },
+                { period: 'أسابيع 7-8', completed: 0, total: 2 },
+                { period: 'أسابيع 9-10', completed: 0, total: 2 },
+                { period: 'أسابيع 11-12', completed: 0, total: 2 },
+            ];
+
+            let taskIndex = 0;
+            roadmapData.forEach(group => {
+                group.tasks.forEach(task => {
+                    const periodIndex = Math.floor(taskIndex / 2);
+                    if (periodIndex < paceData.length) {
+                        if (progress[task.id] && progress[task.id].completed) {
+                            paceData[periodIndex].completed++;
+                        }
+                    }
+                    taskIndex++;
+                });
+            });
+
+            const completed = paceData.map(p => p.completed);
+            const remaining = paceData.map(p => p.total - p.completed);
+            const labels = paceData.map(p => p.period);
+            
+            if (weeklyPaceChartInstance) {
+                weeklyPaceChartInstance.destroy();
+            }
+
+            weeklyPaceChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'المهام المكتملة', data: completed, backgroundColor: '#10b981' },
+                        { label: 'المهام المتبقية', data: remaining, backgroundColor: '#ef4444' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#d1d5db' } },
+                        y: { stacked: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#d1d5db' }, max: 2, min: 0 }
+                    },
+                    plugins: { legend: { labels: { color: '#d1d5db' } } }
+                }
+            });
+        }
+
+        // 13. دالة التحقق وعرض الأوسمة
+        function checkAndDisplayBadges(skillProgress) {
+            roadmapData.forEach(group => {
+                const skillKey = group.skillKey;
+                const badgeElement = document.getElementById(`badge-${skillKey}`);
+
+                if (badgeElement) {
+                    if (skillProgress[skillKey].percentage === 100) {
+                        badgeElement.classList.remove('opacity-30', 'text-gray-500');
+                        badgeElement.classList.add('text-yellow-400', 'animate-pulse');
+                        badgeElement.title = `تهانينا! أكملت ${group.skillLabel}`;
+                    } else {
+                        badgeElement.classList.add('opacity-30', 'text-gray-500');
+                        badgeElement.classList.remove('text-yellow-400', 'animate-pulse');
+                        badgeElement.title = `لم تكتمل بعد: ${group.skillLabel}`;
+                    }
+                }
+            });
+        }
+
+        // 14. دالة عرض خريطة الطريق التفصيلية
+        function renderRoadmap() {
+            const container = document.getElementById('roadmap-container');
+            if (!container) return;
+            let html = '<h2 class="text-2xl font-bold text-white mb-6">خطة العمل لـ 3 أشهر</h2>';
+
+            let globalTaskIndex = 1; // ترقيم تسلسلي جديد
+
+            roadmapData.forEach(group => {
+                html += `
+                    <div class="mb-8 p-6 pro-card">
+                        <h3 class="text-2xl font-bold text-indigo-400 mb-4 flex items-center">
+                            <i class="fas fa-calendar-alt ml-3"></i> ${group.month}
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                `;
+
+                group.tasks.forEach(task => {
+                    const isCompleted = currentProgress[task.id] && currentProgress[task.id].completed;
+                    const statusClass = isCompleted ? 'border-emerald-500 bg-emerald-900/20' : 'border-gray-600 bg-gray-700/50 hover:bg-gray-600/50';
+                    const icon = isCompleted ? 'fa-check-circle text-emerald-400' : 'fa-circle-notch text-yellow-400 animate-spin-slow';
+
+                    const hours = currentProgress[task.id]?.timeSpentHours ? `(${currentProgress[task.id].timeSpentHours} س)` : '';
+                    
+                    // تحديد ما إذا كانت المهمة هي "مشروع المحفظة النهائي" (المهمة رقم 12)
+                    const isPortfolioProject = task.id === 'M3_T4';
+
+                    html += `
+                        <div class="p-4 border-r-4 ${statusClass} rounded-lg transition duration-200 relative">
+                            <div class="flex items-start justify-between">
+                                <h4 class="text-lg font-semibold text-white mb-1">
+                                    <span class="text-indigo-400 font-extrabold mr-2">${globalTaskIndex}.</span> <!-- عرض رقم المهمة -->
+                                    <i class="fas ${icon} ml-2"></i> ${task.name} ${hours}
+                                </h4>
+                                ${!isCompleted ? 
+                                    `<button onclick="window.showQuizModal('${task.id}')" class="btn-primary text-xs px-3 py-1 rounded-full">
+                                        بدء الاختبار
+                                    </button>` :
+                                    `<span class="text-emerald-400 text-xs font-medium bg-emerald-900/50 px-2 py-0.5 rounded-full">
+                                        مكتمل <i class="fas fa-thumbs-up mr-1"></i>
+                                    </span>`
+                                }
+                            </div>
+                            <p class="text-sm text-gray-400">${task.description}</p>
+                            
+                            ${isPortfolioProject ? `
+                                <div id="project-consultation-area" class="mt-4 pt-4 border-t border-gray-600">
+                                    <button onclick="window.consultProjectIdea()" class="w-full bg-rose-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-rose-700 transition duration-150 flex items-center justify-center text-sm" id="consult-btn">
+                                        <i class="fas fa-brain ml-2"></i> ✨ استشارة فكرة المشروع (Gemini AI)
+                                    </button>
+                                    <div id="consultation-result" class="mt-2 p-3 text-left bg-gray-800 rounded-lg hidden">
+                                        <h4 class="font-bold text-sm text-yellow-300 mb-1">فكرة المشروع المقترحة:</h4>
+                                        <div id="consultation-content" class="text-gray-200 text-xs"></div>
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                        </div>
+                    `;
+                    globalTaskIndex++; // زيادة العداد
+                });
+
+                html += `
                         </div>
                     </div>
-                </div>
-                
-                <!-- مشروع 2: تحليل وسائل التواصل الاجتماعي -->
-                <div class="data-card bg-gray-50 rounded-xl shadow-lg p-6 flex flex-col h-full">
-                    <i class="fas fa-microchip text-primary text-3xl mb-3"></i>
-                    <h3 class="text-2xl font-bold mb-3 text-primary">2. تقييم المشاعر وتحليل NLP</h3>
-                    <p class="text-gray-700 mb-4 flex-grow">
-                        استخدام مكتبات NLP (معالجة اللغة الطبيعية) لتقييم مشاعر العملاء من التعليقات وتحسين رسائل التسويق.
-                    </p>
-                    <div class="mt-auto">
-                        <span class="inline-block bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full mb-3">NLP</span>
-                        <span class="inline-block bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full mb-3 mr-2">Power BI</span>
-                        <div class="flex space-x-4 space-x-reverse mt-4 border-t border-gray-200 pt-3">
-                            <a href="#" class="text-primary hover:underline font-medium flex items-center"><i class="fas fa-file-alt ml-1 text-sm"></i> عرض الدراسة</a>
-                            <a href="#" class="text-gray-600 hover:text-gray-900 font-medium flex items-center"><i class="fab fa-github ml-1 text-sm"></i> كود المشروع</a>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 15. دوال التعامل مع نافذة الاختبار الجزئي (Quiz Modal)
+        window.showQuizModal = function(taskId) {
+            currentTaskData = null;
+            let task = null;
+            roadmapData.forEach(group => {
+                const found = group.tasks.find(t => t.id === taskId);
+                if (found) task = found;
+            });
+
+            if (!task) {
+                console.error("Task not found:", taskId);
+                return;
+            }
+
+            currentTaskData = task;
+            document.getElementById('quiz-modal-title').textContent = `اختبار: ${task.name}`;
+            document.getElementById('quiz-modal-description').textContent = task.description;
+            document.getElementById('timeSpent').value = '';
+            document.getElementById('quiz-message').classList.add('hidden');
+            
+            const questionsContainer = document.getElementById('quiz-questions-container');
+            questionsContainer.innerHTML = '';
+
+            task.quiz.forEach((q, qIndex) => {
+                let questionHtml = `
+                    <div class="p-4 bg-gray-700 rounded-lg">
+                        <p class="font-medium text-gray-200 mb-3">${qIndex + 1}. ${q.question}</p>
+                        <div class="space-y-2">
+                `;
+                q.options.forEach((opt, oIndex) => {
+                    const optionId = `quiz_${qIndex}_o${oIndex}`;
+                    questionHtml += `
+                        <label for="${optionId}" class="flex items-center p-2 rounded-lg cursor-pointer hover:bg-gray-600">
+                            <input type="radio" id="${optionId}" name="question${qIndex}" value="${opt.text === (q.options.find(o => o.correct) || {}).text ? 'true' : 'false'}" class="text-indigo-500 focus:ring-indigo-500" required>
+                            <span class="mr-3 text-gray-300">${opt.text}</span>
+                        </label>
+                    `;
+                });
+                questionHtml += `
                         </div>
                     </div>
-                </div>
+                `;
+                questionsContainer.innerHTML += questionHtml;
+            });
 
-                <!-- مشروع 3: تحسين سلسلة الإمداد -->
-                <div class="data-card bg-gray-50 rounded-xl shadow-lg p-6 flex flex-col h-full">
-                    <i class="fas fa-warehouse text-primary text-3xl mb-3"></i>
-                    <h3 class="text-2xl font-bold mb-3 text-primary">3. نمذجة السلاسل الزمنية للمخزون</h3>
-                    <p class="text-gray-700 mb-4 flex-grow">
-                        تطبيق نماذج التنبؤ (Forecasting) على بيانات المبيعات التاريخية لتحسين كفاءة المخزون والحد من النقص/الفائض.
-                    </p>
-                    <div class="mt-auto">
-                        <span class="inline-block bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full mb-3">Time Series</span>
-                        <span class="inline-block bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full mb-3 mr-2">SQL</span>
-                        <div class="flex space-x-4 space-x-reverse mt-4 border-t border-gray-200 pt-3">
-                            <a href="#" class="text-primary hover:underline font-medium flex items-center"><i class="fas fa-file-alt ml-1 text-sm"></i> عرض الدراسة</a>
-                            <a href="#" class="text-gray-600 hover:text-gray-900 font-medium flex items-center"><i class="fab fa-github ml-1 text-sm"></i> كود المشروع</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- قسم السيرة الذاتية (CV) -->
-    <section id="cv" class="py-16 bg-accent-bg">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-4xl font-bold mb-6 text-gray-900 border-b-4 border-primary inline-block pb-1">السيرة الذاتية (CV)</h2>
-            <p class="text-xl text-gray-600 mb-8">
-                للاطلاع على مسيرتي الأكاديمية والمهنية بالتفصيل، يمكنك تحميل نسختي المحدثة.
-            </p>
-            <a href="[رابط_ملف_السيرة_الذاتية_PDF]" target="_blank" class="inline-flex items-center justify-center px-8 py-4 text-xl font-bold rounded-lg text-white bg-primary hover:bg-blue-800 transition duration-300 shadow-xl hero-button">
-                <i class="fas fa-cloud-arrow-down ml-3"></i> تحميل السيرة الذاتية (PDF)
-            </a>
-        </div>
-    </section>
+            document.getElementById('quizModal').classList.remove('hidden');
+            document.getElementById('quizModal').classList.add('flex');
+        }
 
+        window.hideQuizModal = function() {
+            document.getElementById('quizModal').classList.add('hidden');
+            document.getElementById('quizModal').classList.remove('flex');
+            const quizForm = document.getElementById('quiz-form');
+            if (quizForm) quizForm.reset();
+            currentTaskData = null;
+        }
 
-    <!-- قسم التواصل (Contact) -->
-    <section id="contact" class="py-16 md:py-24 bg-white shadow-inner">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-4xl font-bold mb-8 text-gray-900 border-b-4 border-primary inline-block pb-1">تواصل معي</h2>
-            <p class="text-xl text-gray-600 mb-10">
-                أنا متاح لمناقشة فرص العمل، الاستشارات التحليلية، أو التعاون في مشاريع تحليل البيانات.
-            </p>
+        window.submitQuiz = async function(event) {
+            event.preventDefault();
+            const form = event.target;
+            const messageElement = document.getElementById('quiz-message');
+            messageElement.classList.add('hidden');
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-                <!-- البريد الإلكتروني -->
-                <div class="p-6 bg-gray-50 rounded-xl data-card">
-                    <i class="fas fa-envelope text-4xl text-primary mb-3"></i>
-                    <p class="font-semibold text-lg text-primary">البريد الإلكتروني</p>
-                    <a href="mailto:your.email@example.com" class="text-gray-700 hover:underline">your.email@example.com</a>
-                </div>
+            if (!currentTaskData) return;
+
+            const quiz = currentTaskData.quiz;
+            let correctAnswers = 0;
+            const userResults = [];
+            const passingGrade = 0.75; 
+
+            quiz.forEach((q, qIndex) => {
+                const selectedOptionValue = form.elements[`question${qIndex}`]?.value;
+                const isCorrect = selectedOptionValue === 'true'; // تحقق من القيمة 'true' المخزنة
+
+                let selectedText = 'لم يتم الإجابة';
+                const options = form.elements[`question${qIndex}`];
+                for(let i = 0; i < options.length; i++) {
+                    if(options[i].checked) {
+                        selectedText = options[i].nextElementSibling.textContent; // get text from span
+                        break;
+                    }
+                }
+
+                userResults.push({
+                    q: q.question,
+                    userAnswer: selectedText,
+                    isCorrect: isCorrect
+                });
                 
-                <!-- الهاتف (مثال) -->
-                <div class="p-6 bg-gray-50 rounded-xl data-card">
-                    <i class="fas fa-phone-alt text-4xl text-primary mb-3"></i>
-                    <p class="font-semibold text-lg text-primary">الهاتف</p>
-                    <a href="tel:+201000000000" class="text-gray-700 hover:underline">+20 100 000 0000</a>
+                if (isCorrect) {
+                    correctAnswers++;
+                }
+            });
+
+            const score = correctAnswers / quiz.length;
+
+            if (score >= passingGrade) {
+                const timeSpent = parseFloat(form.elements['timeSpent'].value) || 0;
+                
+                currentProgress[currentTaskData.id] = {
+                    completed: true,
+                    timeSpentHours: timeSpent.toFixed(2),
+                    quizResults: userResults,
+                    completionDate: new Date().toISOString()
+                };
+
+                await saveProgress();
+                calculateOverallProgress();
+                
+                messageElement.textContent = `تهانينا! نسبة النجاح (${(score * 100).toFixed(0)}%). تم إكمال المهمة وتسجيل ${timeSpent.toFixed(2)} ساعة.`;
+                messageElement.className = 'mt-4 p-3 rounded-lg text-sm bg-emerald-900/50 text-emerald-300 block';
+                
+                setTimeout(window.hideQuizModal, 2000);
+
+            } else {
+                messageElement.textContent = `للأسف، نسبة النجاح هي ${(score * 100).toFixed(0)}%. المطلوب ٧٥%. يرجى المراجعة والمحاولة مرة أخرى.`;
+                messageElement.className = 'mt-4 p-3 rounded-lg text-sm bg-rose-900/50 text-rose-300 block';
+            }
+        }
+
+
+        // 16. دالة عرض سجل الاختبارات الجزئية (History View)
+        function getCorrectAnswer(taskId, questionText) {
+            let correctAnswer = 'غير متوفر';
+            roadmapData.forEach(group => {
+                group.tasks.forEach(task => {
+                    if (task.id === taskId) {
+                        const questionObj = task.quiz.find(q => q.question === questionText);
+                        if (questionObj) {
+                            const correctOption = questionObj.options.find(opt => opt.correct);
+                            if (correctOption) {
+                                correctAnswer = correctOption.text;
+                            }
+                        }
+                    }
+                });
+            });
+            return correctAnswer;
+        }
+        
+        function renderQuizHistory() {
+            const container = document.getElementById('quiz-history-container');
+            const loadingMessage = document.getElementById('loading-history-message');
+            
+            if (loadingMessage) {
+                loadingMessage.style.display = 'none';
+            }
+            container.innerHTML = '';
+
+            if (!userId) {
+                 container.innerHTML = '<p class="text-center text-gray-400 mt-10">يرجى تسجيل الدخول لعرض سجل الاختبارات.</p>';
+                 return;
+            }
+
+            let completedTasksCount = 0;
+            let html = '';
+
+            roadmapData.forEach(group => {
+                group.tasks.forEach(task => {
+                    const progress = currentProgress[task.id];
+                    if (progress && progress.completed) {
+                        completedTasksCount++;
+                        
+                        const date = new Date(progress.completionDate);
+                        const formattedDate = date.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+                        
+                        html += `
+                            <div class="pro-card p-6 border-l-4 border-indigo-400">
+                                <h2 class="text-2xl font-bold text-emerald-400 mb-2">${task.name} <i class="fas fa-check-circle mr-1"></i></h2>
+                                <div class="text-sm text-gray-400 mb-4 flex flex-wrap gap-4">
+                                    <span class="flex items-center"><i class="fas fa-calendar-check mr-2"></i> تم الإكمال: ${formattedDate}</span>
+                                    <span class="flex items-center"><i class="fas fa-hourglass-start mr-2"></i> وقت الدراسة المسجل: ${progress.timeSpentHours || '0.00'} ساعة</span>
+                                </div>
+                                
+                                <h3 class="text-xl font-semibold text-indigo-300 mt-6 mb-3">تفاصيل الاختبار المسجل:</h3>
+                                <div class="space-y-4">
+                        `;
+                        
+                        if (progress.quizResults && Array.isArray(progress.quizResults)) {
+                            progress.quizResults.forEach((result, qIndex) => {
+                                const isCorrect = result.isCorrect;
+                                const answerClass = isCorrect ? 'user-answer-correct' : 'user-answer-incorrect';
+                                const correctAns = getCorrectAnswer(task.id, result.q); 
+
+                                html += `
+                                    <div class="p-4 rounded-lg bg-gray-700">
+                                        <p class="font-medium text-gray-200 mb-2">${qIndex + 1}. ${result.q}</p>
+                                        <div class="mr-6 space-y-2 text-sm">
+                                            <div class="p-2 rounded-lg ${answerClass} flex items-center">
+                                                <i class="fas ${isCorrect ? 'fa-check-circle text-emerald-300' : 'fa-times-circle text-rose-300'} ml-2"></i>
+                                                <span class="text-white">إجابتك: ${result.userAnswer}</span>
+                                            </div>
+                                            <div class="p-2 rounded-lg correct-answer bg-gray-600 flex items-center">
+                                                <i class="fas fa-bullseye ml-2 text-emerald-400"></i>
+                                                <span class="text-gray-200">الإجابة الصحيحة: ${correctAns}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                        } else {
+                            html += '<p class="text-gray-500">لا توجد نتائج اختبار مفصلة مسجلة لهذه المهمة.</p>';
+                        }
+
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            });
+            
+            if (completedTasksCount === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 mt-10">لم تكمل أي مهمة بعد. أكمل الاختبارات في خريطة الطريق لعرضها هنا.</p>';
+            } else {
+                container.innerHTML = html;
+            }
+        }
+
+
+        // 17. دوال الاختبار الشامل (Comprehensive Exam)
+        
+        // دالة عرض الاختبار الشامل (توليد HTML)
+        function renderComprehensiveExam() {
+            const resultsDiv = document.getElementById('exam-results');
+            const startBtn = document.getElementById('start-exam-btn');
+            const examForm = document.getElementById('comprehensive-exam-form');
+            const examContainer = document.getElementById('exam-stage-container'); // تعريف examContainer هنا
+            const navButtons = document.querySelectorAll('#next-stage-btn, #finish-exam-btn');
+            
+            if (comprehensiveResults) {
+                // حالة الإكمال (عرض النتائج)
+                resultsDiv.classList.remove('hidden');
+                resultsDiv.className = 'mb-6 p-6 rounded-lg bg-emerald-900/50 text-emerald-300 border-l-4 border-emerald-500 block';
+                resultsDiv.innerHTML = `
+                    <h3 class="text-2xl font-bold mb-3">نتائج الاختبار التشخيصي الشامل الأخيرة</h3>
+                    <p class="text-lg">نسبة الإجابات الصحيحة: <span class="font-extrabold text-white">${(comprehensiveResults.score * 100).toFixed(0)}%</span></p>
+                    <p class="text-lg mb-4">تم الإكمال بتاريخ: ${new Date(comprehensiveResults.completionDate).toLocaleDateString('ar-EG')}</p>
+                    
+                    <!-- عرض زر التقرير من هنا -->
+                    <button onclick="window.showReportModalFromResults(comprehensiveResults)" class="w-full mt-4 bg-rose-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-rose-700 transition duration-150 flex items-center justify-center mx-auto">
+                         <i class="fas fa-file-alt ml-2"></i> عرض تقرير الأخطاء بالتفصيل
+                    </button>
+                    
+                    <button onclick="window.generateDiagnosis()" class="w-full mt-4 bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition duration-150 flex items-center justify-center mx-auto" id="diagnosis-btn">
+                        <i class="fas fa-wand-magic-sparkles ml-2"></i> ✨ تشخيص النتيجة الشاملة (Gemini AI)
+                    </button>
+                    <div id="diagnosis-result" class="mt-4 p-4 text-left bg-gray-700 rounded-lg hidden">
+                        <h4 class="font-bold text-lg text-rose-300 mb-2">تحليل Gemini:</h4>
+                        <div id="diagnosis-content" class="text-gray-200 text-sm"></div>
+                    </div>
+                `;
+                startBtn.classList.add('hidden');
+                examForm.classList.add('hidden');
+                document.getElementById('exam-instructions').classList.add('hidden');
+                
+            } else {
+                // حالة ما قبل البدء
+                resultsDiv.classList.add('hidden');
+                startBtn.classList.remove('hidden');
+                examForm.classList.add('hidden');
+                document.getElementById('exam-instructions').classList.remove('hidden');
+                
+                // إعادة تعيين المؤقت المعروض
+                document.getElementById('exam-timer-display').textContent = '45:00';
+                
+                navButtons.forEach(btn => btn.classList.add('hidden'));
+                window.stopExamTimer(); // تأكد من إيقاف المؤقت
+                
+                // إعادة ضبط حالة الاختبار
+                currentExamStage = 0;
+                // لا نحذف الإجابات المؤقتة هنا، بل يتم تحميلها عند DOMContentLoaded
+                examContainer.innerHTML = '';
+                
+                // إذا كانت هناك إجابات مؤقتة محفوظة، اعرض زر متابعة
+                if (Object.keys(currentExamAnswers).length > 0) {
+                     startBtn.textContent = 'متابعة الاختبار (45 دقيقة متبقية)';
+                } else {
+                     startBtn.textContent = 'بدء الاختبار الآن (45 دقيقة)';
+                }
+            }
+        }
+        
+        // دالة بدء الاختبار (تم تصديرها إلى window)
+        window.startComprehensiveExam = function() {
+            if (examTimerInterval) window.stopExamTimer(); // تأكد من الإيقاف قبل البدء
+            
+            document.getElementById('start-exam-btn').classList.add('hidden');
+            document.getElementById('comprehensive-exam-form').classList.remove('hidden');
+            document.getElementById('exam-instructions').classList.add('hidden');
+
+            // إذا لم تكن هناك إجابات محفوظة، ابدأ مؤقت جديد (45 دقيقة)
+            if (Object.keys(currentExamAnswers).length === 0) {
+                examTimeRemaining = 45 * 60; 
+                currentExamStage = 0;
+            } else {
+                 // افتراضاً، إذا كان هناك تقدم، فإن الوقت المتبقي هو 45 دقيقة (يمكن تعقيد هذا لحفظ الوقت أيضاً)
+                 // سنفترض حالياً أن المؤقت يعاد تعيينه في كل مرة لتبسيط التخزين
+                 examTimeRemaining = 45 * 60; 
+                 // تحديد آخر مرحلة تم ملؤها جزئياً أو كلياً
+                 const lastAnsweredQIndex = Math.max(...Object.keys(currentExamAnswers).filter(k => k.startsWith('examQuestion')).map(k => parseInt(k.replace('examQuestion', ''))));
+                 
+                 // التأكد من أن lastAnsweredQIndex ليست -Infinity قبل استخدامها
+                 if (isFinite(lastAnsweredQIndex) && lastAnsweredQIndex >= 0) {
+                     currentExamStage = comprehensiveExamQuestions[lastAnsweredQIndex].stage - 1;
+                 } else {
+                     currentExamStage = 0;
+                 }
+            }
+            
+            // بدء المؤقت
+            window.startExamTimer();
+            
+            // بدء المرحلة الحالية
+            window.renderExamStage(currentExamStage);
+        }
+
+        // دالة إيقاف المؤقت (تم تصديرها إلى window)
+        window.stopExamTimer = function() {
+            const fixedTimerEl = document.getElementById('fixed-exam-timer');
+            if (examTimerInterval) {
+                clearInterval(examTimerInterval);
+                examTimerInterval = null;
+            }
+             fixedTimerEl.classList.add('hidden'); // إخفاء المؤقت الثابت عند الإيقاف
+        }
+        
+        // دالة تشغيل المؤقت
+        window.startExamTimer = function() {
+            window.stopExamTimer(); // إيقاف أي مؤقت سابق
+            const timerEl = document.getElementById('exam-timer-display');
+            const fixedTimerEl = document.getElementById('fixed-exam-timer');
+            fixedTimerEl.classList.remove('hidden'); // إظهار المؤقت الثابت
+            
+            examTimerInterval = setInterval(() => {
+                examTimeRemaining--;
+
+                const minutes = Math.floor(examTimeRemaining / 60);
+                const seconds = examTimeRemaining % 60;
+                
+                const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                timerEl.textContent = timeString;
+                
+                if (examTimeRemaining <= 300) { // أقل من 5 دقائق
+                    timerEl.classList.remove('text-yellow-400');
+                    timerEl.classList.add('text-rose-400');
+                } else if (examTimeRemaining <= 0) {
+                    window.stopExamTimer();
+                    timerEl.textContent = 'انتهى الوقت!';
+                    window.submitComprehensiveExam(new Event('submit')); // إرسال تلقائي
+                }
+            }, 1000);
+        }
+        
+        // دالة التحقق من اكتمال إجابات المرحلة الحالية (جديد)
+        function checkCurrentStageCompletion(stage) {
+            // المرحلة الأخيرة الآن هي 2 (Stats/ML)
+            const questionsInStage = comprehensiveExamQuestions.filter(q => q.stage === stage + 1);
+            let allAnswered = true;
+
+            questionsInStage.forEach(q => {
+                const questionIndex = comprehensiveExamQuestions.findIndex(eq => eq.question === q.question);
+                const radioName = `examQuestion${questionIndex}`;
+                // التحقق من أن الإجابة موجودة في التخزين المؤقت
+                if (!currentExamAnswers.hasOwnProperty(radioName)) {
+                    allAnswered = false;
+                }
+            });
+
+            // لا يوجد سؤال قرار تجاري الآن
+            return allAnswered;
+        }
+
+        // دالة التنقل بين المراحل
+        window.navigateExamStage = function(direction) {
+            
+            // 1. حفظ إجابات المرحلة الحالية في التخزين المؤقت قبل التحقق من التقدم
+            window.saveCurrentStageAnswers(currentExamStage); 
+
+            // 2. التحقق من الإكمال قبل الانتقال للأمام (No Backtracking)
+            if (direction > 0) {
+                if (!checkCurrentStageCompletion(currentExamStage)) {
+                     // استخدام رسالة بسيطة بدلاً من alert
+                     document.getElementById('exam-results').innerHTML = `<p class="text-lg text-rose-400">الرجاء الإجابة على جميع أسئلة هذه المرحلة قبل الانتقال إلى التالية.</p>`;
+                     document.getElementById('exam-results').classList.remove('hidden');
+                     document.getElementById('exam-results').classList.add('bg-rose-900/50', 'border-rose-500');
+                     return;
+                } else {
+                    document.getElementById('exam-results').classList.add('hidden'); // إخفاء الرسالة إذا تم الإكمال
+                }
+            }
+            
+            // 3. تحديث المرحلة (direction > 0 فقط مسموح به هنا)
+            currentExamStage += direction;
+            
+            // 4. عرض المرحلة الجديدة
+            window.renderExamStage(currentExamStage);
+        }
+
+        // دالة حفظ إجابات المرحلة الحالية
+        window.saveCurrentStageAnswers = function(stage) {
+            const form = document.getElementById('comprehensive-exam-form');
+            const questionsInStage = comprehensiveExamQuestions.filter(q => q.stage === stage + 1);
+            
+            questionsInStage.forEach((q, index) => {
+                const questionIndex = comprehensiveExamQuestions.findIndex(eq => eq.question === q.question);
+                const radioName = `examQuestion${questionIndex}`;
+                
+                // التحقق من الإجابة في DOM
+                const selectedOption = form.elements[radioName]?.value;
+                
+                // حفظ الإجابة
+                if (selectedOption !== undefined) {
+                    currentExamAnswers[radioName] = selectedOption;
+                }
+            });
+            
+            // لا يوجد سؤال قرار تجاري الآن في المرحلة 3
+            currentExamAnswers['businessRecommendation'] = '';
+            
+            // حفظ حالة الاختبار في التخزين المحلي (للاستمرارية)
+            localStorage.setItem('tempExamAnswers', JSON.stringify(currentExamAnswers));
+        }
+
+        // دالة عرض مراحل الاختبار (Stage 0, 1, 2)
+        window.renderExamStage = function(stageIndex) {
+            const container = document.getElementById('exam-stage-container');
+            const nextBtn = document.getElementById('next-stage-btn');
+            const finishBtn = document.getElementById('finish-exam-btn'); // استخدام finishBtn
+            
+            // تنظيف الحاوية
+            container.innerHTML = '';
+            
+            const stageLabels = ["SQL/Data Wrangling (أسئلة 1-5)", "Python/Visualization (أسئلة 6-10)", "Stats/ML (أسئلة 11-15)"];
+            
+            let html = '';
+            
+            if (stageIndex >= 0 && stageIndex <= 2) {
+                // مراحل أسئلة الاختيار من متعدد
+                const questionsInStage = comprehensiveExamQuestions.filter(q => q.stage === stageIndex + 1);
+                
+                html += `<h3 class="text-xl font-bold text-indigo-300 mb-4">${stageLabels[stageIndex]}</h3>`;
+                
+                questionsInStage.forEach((q, qIndexInStage) => {
+                    // تحديد الرقم التسلسلي الكلي
+                    const questionIndex = comprehensiveExamQuestions.findIndex(eq => eq.question === q.question);
+                    const globalIndex = questionIndex + 1;
+                    const radioName = `examQuestion${questionIndex}`;
+                    const savedValue = currentExamAnswers[radioName]; // قيمة محفوظة مؤقتاً
+                    
+                    html += `
+                        <div class="p-5 bg-gray-700 rounded-lg border-b border-rose-600">
+                            <p class="font-bold text-lg text-rose-300 mb-3">${globalIndex}. ${q.question} <span class="text-sm text-gray-400">(${q.category})</span></p>
+                            <div class="space-y-2">
+                    `;
+                    q.options.forEach((opt, oIndex) => {
+                        const optionId = `exam_q${globalIndex}_o${oIndex}`;
+                        const isCorrectOption = (opt.text === q.correct);
+                        const valueToSave = isCorrectOption ? 'true' : 'false';
+                        const isChecked = savedValue === valueToSave; // التحقق من القيمة المحفوظة
+                        
+                        html += `
+                            <label for="${optionId}" class="flex items-center p-3 rounded-lg cursor-pointer hover:bg-gray-600">
+                                <input type="radio" id="${optionId}" name="${radioName}" value="${valueToSave}" 
+                                       class="text-rose-500 focus:ring-rose-500" ${isChecked ? 'checked' : ''} required
+                                       onchange="window.handleExamAnswerChange(this, ${stageIndex})">
+                                <span class="mr-3 text-gray-300">${opt.text}</span>
+                            </label>
+                        `;
+                    });
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                });
+                
+            } 
+            // حذف مرحلة السؤال المفتوح (stageIndex === 3)
+
+            container.innerHTML = html;
+            
+            // تحديث أزرار التنقل
+            const totalStages = 3; // عدد المراحل الآن 3 (0, 1, 2)
+            
+            nextBtn.classList.toggle('hidden', stageIndex >= totalStages - 1); 
+            finishBtn.classList.toggle('hidden', stageIndex !== totalStages - 1); // إظهار الإنهاء في المرحلة الأخيرة (stage 2)
+
+            // تحديث حالة زر التالي بناءً على الإكمال
+            window.updateNextButtonState(stageIndex);
+        }
+        
+        // دالة تحديث حالة زر التالي/الإرسال (جديد)
+        window.updateNextButtonState = function(stageIndex) {
+            const nextBtn = document.getElementById('next-stage-btn');
+            const finishBtn = document.getElementById('finish-exam-btn');
+            const isCompleted = checkCurrentStageCompletion(stageIndex);
+
+            if (stageIndex < 2) { // المراحل 0 و 1
+                nextBtn.disabled = !isCompleted;
+                nextBtn.classList.toggle('disabled-nav-btn', !isCompleted);
+            } else if (stageIndex === 2) { // المرحلة 2 (النهائية)
+                 finishBtn.disabled = !isCompleted;
+                 finishBtn.classList.toggle('disabled-nav-btn', !isCompleted);
+            }
+        }
+        
+        // دالة لمعالجة تغيير الإجابة في الاختبار الشامل (جديد)
+        window.handleExamAnswerChange = function(input, stageIndex) {
+            // حفظ الإجابة بمجرد تغييرها
+            const radioName = input.name;
+            currentExamAnswers[radioName] = input.value;
+            localStorage.setItem('tempExamAnswers', JSON.stringify(currentExamAnswers));
+            
+            window.updateNextButtonState(stageIndex);
+        }
+
+        // دالة إرسال الاختبار الشامل (تم تصديرها إلى window)
+        window.submitComprehensiveExam = async function(event) {
+            // نستخدم event.target لتحديد أي زر تم الضغط عليه (submit button)
+            event.preventDefault();
+            
+            // إيقاف المؤقت وضمان حفظ إجابات المرحلة الأخيرة
+            window.stopExamTimer();
+            window.saveCurrentStageAnswers(currentExamStage); // حفظ المرحلة النهائية
+
+            const form = document.getElementById('comprehensive-exam-form');
+            const finishBtn = document.getElementById('finish-exam-btn');
+            
+            // تعطيل الزر لمنع الإرسال المتعدد
+            if (finishBtn) finishBtn.disabled = true;
+
+            const totalQuestions = comprehensiveExamQuestions.length;
+            let correctAnswers = 0;
+            const resultsLog = [];
+            const incorrectAnswers = []; // لتخزين الأخطاء للتقرير
+
+            // 1. تقييم أسئلة الاختيار من متعدد
+            for (let i = 0; i < totalQuestions; i++) {
+                const radioName = `examQuestion${i}`;
+                const selectedOptionValue = currentExamAnswers[radioName];
+                const q = comprehensiveExamQuestions[i];
+                
+                const isCorrect = selectedOptionValue === 'true';
+                
+                if (isCorrect) {
+                    correctAnswers++;
+                }
+                
+                let selectedText = 'لم يتم الإجابة';
+                let correctText = q.correct;
+
+                // محاولة استنتاج النص المختار بناءً على القيمة المخزنة
+                if (selectedOptionValue) {
+                     // البحث عن النص الذي يطابق القيمة المخزنة (true/false)
+                     const selectedOpt = q.options.find(opt => (opt.text === q.correct) === (selectedOptionValue === 'true'));
+                     selectedText = selectedOpt ? selectedOpt.text : 'إجابة غير معروفة';
+                }
+
+                const resultEntry = {
+                    q: q.question,
+                    userAnswer: selectedText,
+                    isCorrect: isCorrect,
+                    correctAnswerText: correctText,
+                    rationale: q.options.find(o => o.text === correctText)?.rationale || 'لا يوجد شرح متاح.',
+                    category: q.category
+                };
+                
+                resultsLog.push(resultEntry);
+                
+                if (!isCorrect) {
+                    incorrectAnswers.push(resultEntry);
+                }
+            }
+
+            const score = correctAnswers / totalQuestions;
+            // إزالة سؤال القرار التجاري من البيانات المسجلة
+            const businessRecommendation = 'تم إلغاء السؤال المفتوح، تم التقييم بناءً على 15 سؤال اختيار من متعدد.'; 
+            
+            const examData = {
+                score: score,
+                correctAnswers: correctAnswers,
+                totalQuestions: totalQuestions,
+                businessRecommendation: businessRecommendation,
+                timeSpentSeconds: (45 * 60) - examTimeRemaining, // تسجيل الوقت المستغرق
+                completionDate: new Date().toISOString(),
+                detailedResults: resultsLog
+            };
+
+            const docRef = getExamResultsDocRef();
+            if (docRef) {
+                const resultsDiv = document.getElementById('exam-results');
+                resultsDiv.innerHTML = `<p class="text-lg text-yellow-400">جاري إرسال الاختبار وحفظ النتائج...</p>`;
+                resultsDiv.classList.remove('hidden');
+                resultsDiv.classList.add('bg-gray-800');
+
+                // 2. حفظ النتيجة النهائية في Firestore
+                await setDoc(docRef, examData);
+                
+                // تنظيف التخزين المؤقت وحالة الاختبار
+                localStorage.removeItem('tempExamAnswers');
+                currentExamAnswers = {};
+                
+                // 3. عرض التقرير النهائي (جديد)
+                window.showReportModal(examData, incorrectAnswers);
+                
+                // 4. تحديث النتائج فوراً
+                loadComprehensiveResults(); 
+            } else {
+                const resultsDiv = document.getElementById('exam-results');
+                resultsDiv.innerHTML = `<p class="text-lg text-rose-400">خطأ في المصادقة. لا يمكن حفظ نتائج الاختبار الشامل.</p>`;
+                resultsDiv.classList.remove('hidden');
+                resultsDiv.classList.add('bg-rose-900/50', 'border-rose-500');
+            }
+        }
+        
+        // دالة عرض تقرير النتائج (جديد)
+        window.showReportModal = function(examData, incorrectAnswers) {
+            const modal = document.getElementById('reportModal');
+            const content = document.getElementById('report-content');
+            
+            let reportHTML = `
+                <div class="text-center mb-6">
+                    <p class="text-5xl font-extrabold text-emerald-400">${(examData.score * 100).toFixed(0)}%</p>
+                    <p class="text-xl text-gray-300 mt-2">الإجابات الصحيحة: ${examData.correctAnswers} من ${examData.totalQuestions}</p>
+                    <p class="text-md text-indigo-300">الوقت المستغرق: ${(examData.timeSpentSeconds / 60).toFixed(1)} دقيقة</p>
                 </div>
 
-                <!-- لينكد إن -->
-                <div class="p-6 bg-gray-50 rounded-xl data-card">
-                    <i class="fab fa-linkedin-in text-4xl text-primary mb-3"></i>
-                    <p class="font-semibold text-lg text-primary">LinkedIn</p>
-                    <a href="[رابط_لينكد_إن]" target="_blank" class="text-gray-700 hover:underline">ملفي الشخصي</a>
+                <h4 class="text-2xl font-bold text-rose-400 border-b border-gray-600 pb-2 mb-4">الأسئلة التي أخطأت بها (${incorrectAnswers.length} سؤال)</h4>
+                <div class="space-y-6">
+            `;
+            
+            if (incorrectAnswers.length > 0) {
+                incorrectAnswers.forEach((item, index) => {
+                    const globalIndex = examData.detailedResults.findIndex(r => r.q === item.q) + 1;
+                    reportHTML += `
+                        <div class="p-4 bg-gray-700 rounded-lg border-l-4 border-rose-500">
+                            <p class="font-bold text-lg text-rose-300 mb-2">${globalIndex}. ${item.q} <span class="text-sm text-gray-400">(${item.category})</span></p>
+                            <div class="mr-4 space-y-1 text-sm">
+                                <p class="text-white bg-rose-900/50 p-2 rounded-lg">إجابتك الخاطئة: ${item.userAnswer}</p>
+                                <p class="text-emerald-400 bg-emerald-900/50 p-2 rounded-lg">الإجابة الصحيحة: ${item.correctAnswerText}</p>
+                                <p class="text-gray-300 mt-2 italic border-t border-gray-600 pt-2">**الشرح:** ${item.rationale}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                reportHTML += `<p class="text-center text-emerald-400 text-lg">تهانينا! لم ترتكب أي أخطاء في قسم الاختيار من متعدد.</p>`;
+            }
+            
+            reportHTML += `
                 </div>
-            </div>
+            `;
 
-            <p class="text-xl text-gray-600 mb-8 font-bold">
-                تجدني أيضاً على منصات الكود:
-            </p>
+            content.innerHTML = reportHTML;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        
+        // دالة مساعدة لعرض التقرير من شاشة النتائج (لم يتم تعديلها كثيراً)
+        window.showReportModalFromResults = function(results) {
+             const incorrectAnswers = results.detailedResults.filter(r => !r.isCorrect);
+             window.showReportModal(results, incorrectAnswers);
+        }
 
-            <!-- أيقونات التواصل الاجتماعي -->
-            <div class="flex justify-center space-x-6 space-x-reverse">
-                <!-- رابط GitHub -->
-                 <a href="[رابط_جيت_هاب]" target="_blank" class="text-primary hover:text-blue-800 transition duration-300 p-4 rounded-full bg-gray-50 shadow-lg border border-gray-200 hover:shadow-xl">
-                    <i class="fab fa-github w-6 h-6"></i>
-                </a>
-            </div>
-        </div>
-    </section>
+        window.hideReportModal = function() {
+            const modal = document.getElementById('reportModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            // عند إغلاق التقرير، نعيد المستخدم إلى شاشة التتبع
+            window.switchView('tracker');
+        }
 
-    <!-- تذييل الصفحة (Footer) -->
-    <footer class="bg-gray-900 text-white py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p class="mb-2 font-medium text-gray-400">
-                &copy; 2024 معرض أعمال [اسمك]. جميع الحقوق محفوظة.
-            </p>
-            <p class="text-sm text-gray-600">
-                تم التصميم بعناية من أجل وضوح البيانات.
-            </p>
-        </div>
-    </footer>
+        
+        // 18. دالة تحليل الأداء بواسطة Gemini (الميزة 1)
+        window.analyzePerformance = async function() {
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const resultDiv = document.getElementById('analysis-result');
+            const contentDiv = document.getElementById('analysis-content');
+            
+            if (!userId) {
+                contentDiv.innerHTML = "يرجى تسجيل الدخول أولاً لتحليل أدائك.";
+                resultDiv.classList.remove('hidden');
+                return;
+            }
 
+            analyzeBtn.disabled = true;
+            contentDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> جاري تحليل بيانات التقدم وتوليد التوصيات...';
+            resultDiv.classList.remove('hidden');
+            resultDiv.classList.remove('bg-gray-700');
+            resultDiv.classList.add('bg-gray-800');
+
+            const { completedTasks, totalTasks, completedSkillGroups, remainingSkillGroups } = window.performanceData;
+
+            const systemPrompt = `Act as an elite Data Analysis Career Coach and Mentor. Your goal is to provide concise, actionable, and encouraging feedback based on the user's progress in a 3-month Data Analyst roadmap. The response must be a single paragraph, formatted with line breaks, covering three main points: 1) Strengths (completed areas), 2) Current Focus (remaining areas/next steps), and 3) An encouraging call to action. Use high-quality Arabic phrasing.`;
+            const userQuery = `My progress: Total Tasks: ${totalTasks}, Completed Tasks: ${completedTasks}. Completed Skill Groups (100%): [${completedSkillGroups.join(', ')}]. Remaining Skill Groups: [${remainingSkillGroups.join(', ')}]. Please provide the performance analysis.`;
+            
+            const apiKey = ""
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "تعذر الحصول على التحليل. يرجى المحاولة لاحقاً.";
+
+                contentDiv.innerHTML = text.replace(/\n/g, '<br>'); // للحفاظ على فواصل الأسطر
+                resultDiv.classList.remove('bg-gray-800');
+                resultDiv.classList.add('bg-gray-700');
+
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                contentDiv.innerHTML = `<p class="text-rose-400">حدث خطأ أثناء الاتصال بخدمة التحليل: ${error.message}</p>`;
+            } finally {
+                analyzeBtn.disabled = false;
+            }
+        }
+
+
+        // 19. دالة تشخيص النتيجة الشاملة بواسطة Gemini (الميزة 2)
+        // تم تعطيل هذه الدالة مؤقتاً لعدم وجود سؤال مفتوح في الاختبار الجديد
+        window.generateDiagnosis = async function() {
+            const resultDiv = document.getElementById('diagnosis-result');
+            const contentDiv = document.getElementById('diagnosis-content');
+            
+            contentDiv.innerHTML = 'هذه الميزة متاحة فقط في الاختبارات التي تحتوي على أسئلة تحليلية مفتوحة لتقييم الجودة النوعية.';
+            resultDiv.classList.remove('hidden');
+            resultDiv.classList.add('bg-gray-700');
+        }
+        
+        // 20. دالة استشارة المشروع بواسطة Gemini (الميزة 3)
+        window.consultProjectIdea = async function() {
+            const consultBtn = document.getElementById('consult-btn');
+            const resultDiv = document.getElementById('consultation-result');
+            const contentDiv = document.getElementById('consultation-content');
+            
+            if (!userId) {
+                contentDiv.innerHTML = "يرجى تسجيل الدخول أولاً للحصول على استشارة المشروع.";
+                resultDiv.classList.remove('hidden');
+                return;
+            }
+
+            consultBtn.disabled = true;
+            contentDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> جاري تحليل مهاراتك المكتسبة لاقتراح فكرة مشروع...';
+            resultDiv.classList.remove('hidden');
+            resultDiv.classList.remove('bg-gray-800'); // إزالة حالة التحميل السابقة
+            resultDiv.classList.add('bg-gray-900');
+
+            const { allCompletedTaskNames } = window.performanceData;
+            
+            // تحديد المهارات المكتسبة لتركيز المشروع عليها
+            const completedSkillsSummary = allCompletedTaskNames.length > 0
+                ? allCompletedTaskNames.join(', ')
+                : "لم يتم إكمال أي مهام بعد. سيتم اقتراح مشروع في مجال واسع (General Data Analysis).";
+
+            const systemPrompt = `Act as a senior data project manager. Your task is to propose one single, highly innovative and practical final portfolio project idea for a Data Analyst candidate. The project idea MUST utilize the skills listed. The response must be concise, structured using Markdown, and include three sections: Project Title (عنوان المشروع), Key Skills Utilized (المهارات المستخدمة), and Suggested Data Source/Goal (مصدر البيانات/الهدف). Do NOT use any preamble or conclusion, only the structured output.`;
+            const userQuery = `Propose a portfolio project idea based on the candidate's completed skills: [${completedSkillsSummary}]`;
+            
+            const apiKey = ""
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "تعذر الحصول على الاستشارة. يرجى المحاولة لاحقاً.";
+                
+                // تحويل Markdown الناتج إلى HTML بسيط للعرض
+                const htmlContent = text
+                    .replace(/##\s*(.*?)\n/g, '<h5 class="text-sm font-bold text-rose-400 mt-2">$1</h5>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+
+                contentDiv.innerHTML = htmlContent;
+                resultDiv.classList.remove('bg-gray-900');
+                resultDiv.classList.add('bg-gray-800');
+
+            } catch (error) {
+                console.error("Gemini API Error for Project Consultation:", error);
+                contentDiv.innerHTML = `<p class="text-rose-400">حدث خطأ أثناء الاتصال بخدمة الاستشارة: ${error.message}</p>`;
+            } finally {
+                consultBtn.disabled = false;
+            }
+        }
+
+
+        // بدء تشغيل التطبيق
+        document.addEventListener('DOMContentLoaded', () => {
+            authenticateUser(); 
+            // يتم عرض شاشة التتبع افتراضياً
+            window.switchView('tracker');
+            
+            // محاولة تحميل الإجابات المؤقتة عند التحميل الأولي للصفحة
+            try {
+                const savedAnswers = localStorage.getItem('tempExamAnswers');
+                if (savedAnswers) {
+                    currentExamAnswers = JSON.parse(savedAnswers);
+                }
+            } catch (e) {
+                console.warn("Could not load temp answers from localStorage:", e);
+            }
+        });
+        
+    </script>
 </body>
 </html>
